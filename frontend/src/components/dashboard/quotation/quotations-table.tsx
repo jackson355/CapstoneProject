@@ -94,7 +94,7 @@ export function QuotationsTable(): React.JSX.Element {
         setCount(result.data.total);
 
         // Fetch client data for all quotations
-        const clientIds = [...new Set(result.data.quotations.map((q: QuotationRow) => q.client_id))];
+        const clientIds = [...new Set(result.data.quotations.map((q: QuotationRow) => q.client_id))] as number[];
         const clientsData: Record<number, any> = {};
 
         for (const clientId of clientIds) {
