@@ -4,7 +4,6 @@ export const paths = {
   dashboard: {
     overview: '/dashboard',
     account: '/dashboard/account',
-    customers: '/dashboard/customers',
     users: '/dashboard/users',
     createUser: '/dashboard/users/create',
     editUser: (userId: number) => `/dashboard/users/${userId}/edit`,
@@ -15,7 +14,6 @@ export const paths = {
     quotations: '/dashboard/quotations',
     createQuotation: '/dashboard/quotations/create',
     editQuotation: (quotationId: number) => `/dashboard/quotations/${quotationId}/edit`,
-    integrations: '/dashboard/integrations',
     settings: '/dashboard/settings',
   },
   errors: { notFound: '/errors/not-found' },
