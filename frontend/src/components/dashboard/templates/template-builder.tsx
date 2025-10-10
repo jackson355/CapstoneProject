@@ -325,13 +325,13 @@ export function TemplateBuilder(): React.JSX.Element {
     });
   };
 
-  const handleAIChangesApplied = (acceptedImprovements: any[], newTemplateName?: string) => {
-    console.log('AI changes applied:', { acceptedImprovements, newTemplateName });
+  const handleAIChangesApplied = (changes: { variables: any[], improvements: any[] }, newTemplateName?: string) => {
+    console.log('AI changes applied:', { changes, newTemplateName });
 
     // Refresh the template library to show the new template
     setSnackbar({
       open: true,
-      message: `Successfully applied ${acceptedImprovements.length} text improvements while preserving formatting!`,
+      message: `Successfully applied ${changes.improvements.length} text improvements while preserving formatting!`,
       severity: 'success'
     });
 
