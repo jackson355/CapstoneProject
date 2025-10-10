@@ -6,12 +6,6 @@ import { Box, CircularProgress, Alert, Button } from '@mui/material'
 import { ArrowBack } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 
-declare global {
-  interface Window {
-    DocsAPI: any
-  }
-}
-
 export default function OnlyOfficeEditor() {
   const searchParams = useSearchParams()
   const router = useRouter()

@@ -11,12 +11,6 @@ interface OnlyOfficeEditorProps {
   onError?: (error: string) => void;
 }
 
-declare global {
-  interface Window {
-    DocsAPI?: any;
-  }
-}
-
 export function OnlyOfficeEditor({
   templateId,
   isPreviewMode = false,

@@ -15,12 +15,6 @@ import { authClient } from '@/lib/auth/client';
 import { paths } from '@/paths';
 import { RoleGuard } from '@/components/auth/role-guard';
 
-declare global {
-  interface Window {
-    DocsAPI?: any;
-  }
-}
-
 export default function Page(): React.JSX.Element {
   const params = useParams();
   const router = useRouter();
