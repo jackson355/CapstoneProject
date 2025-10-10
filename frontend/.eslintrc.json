@@ -1,0 +1,30 @@
+{
+  "extends": ["next/core-web-vitals", "next/typescript"],
+  "rules": {
+    "@typescript-eslint/no-unused-vars": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "unicorn/prefer-global-this": "off",
+    "unicorn/prefer-add-event-listener": "off",
+    "unicorn/prefer-dom-node-append": "off",
+    "unicorn/prefer-dom-node-remove": "off",
+    "unicorn/prefer-query-selector": "off",
+    "unicorn/prefer-number-properties": "off",
+    "unicorn/catch-error-name": "off",
+    "unicorn/switch-case-braces": "off",
+    "unicorn/numeric-separators-style": "off",
+    "unicorn/no-negated-condition": "off",
+    "unicorn/consistent-function-scoping": "off",
+    "unicorn/prefer-spread": "off",
+    "unicorn/prefer-string-replace-all": "off",
+    "unicorn/explicit-length-check": "off",
+    "unicorn/prefer-ternary": "off",
+    "unicorn/prefer-optional-catch-binding": "off",
+    "unicorn/prefer-blob-reading-methods": "off",
+    "unicorn/empty-brace-spaces": "off",
+    "unicorn/no-zero-fractions": "off",
+    "react/no-unescaped-entities": "off",
+    "react-hooks/exhaustive-deps": "warn",
+    "no-empty": "warn",
+    "import/no-duplicates": "warn"
+  }
+}
