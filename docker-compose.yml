@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    restart: always
+    container_name: postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: icmasdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "9999:80"
+      - "9998:443"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+  onlyoffice:
+    image: onlyoffice/documentserver
+    restart: always
+    container_name: onlyoffice-docs
+    environment:
+      - JWT_ENABLED=false
+      - JWT_SECRET=your_jwt_secret
+      - ALLOW_PRIVATE_IP_ADDRESS=true
+    ports:
+      - "8080:80"
+    volumes:
+      - onlyoffice_data:/var/www/onlyoffice/Data
+      - onlyoffice_logs:/var/log/onlyoffice
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+  onlyoffice_data:
+  onlyoffice_logs:

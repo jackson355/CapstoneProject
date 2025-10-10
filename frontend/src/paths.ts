@@ -1,0 +1,22 @@
+export const paths = {
+  home: '/',
+  auth: { signIn: '/auth/sign-in', signUp: '/auth/sign-up', resetPassword: '/auth/reset-password' },
+  dashboard: {
+    overview: '/dashboard',
+    account: '/dashboard/account',
+    customers: '/dashboard/customers',
+    users: '/dashboard/users',
+    createUser: '/dashboard/users/create',
+    editUser: (userId: number) => `/dashboard/users/${userId}/edit`,
+    clients: '/dashboard/clients',
+    createClient: '/dashboard/clients/create',
+    editClient: (clientId: number) => `/dashboard/clients/${clientId}/edit`,
+    templates: '/dashboard/templates',
+    quotations: '/dashboard/quotations',
+    createQuotation: '/dashboard/quotations/create',
+    editQuotation: (quotationId: number) => `/dashboard/quotations/${quotationId}/edit`,
+    integrations: '/dashboard/integrations',
+    settings: '/dashboard/settings',
+  },
+  errors: { notFound: '/errors/not-found' },
+} as const;

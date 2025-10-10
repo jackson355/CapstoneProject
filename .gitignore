@@ -1,0 +1,32 @@
+# --- Common / System ---
+.DS_Store
+Thumbs.db
+*.log
+*.pid
+
+# --- Claude / IDE / Editor ---
+.claude/
+.vscode/
+.idea/
+
+# --- Python / FastAPI backend ---
+__pycache__/
+*.py[cod]
+*.sqlite3
+instance/
+.env
+*.env
+.venv/
+venv/
+env/
+
+# --- Node / Next.js frontend ---
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.vercel/
+
+# --- Docker ---
+*.pid
+*.log
+docker-data/
