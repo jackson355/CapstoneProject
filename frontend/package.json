@@ -13,7 +13,10 @@
     "lint:fix": "next lint --fix",
     "typecheck": "tsc --noEmit",
     "format:write": "prettier --write \"**/*.{js,jsx,mjs,ts,tsx,mdx}\" --cache",
-    "format:check": "prettier --check \"**/*.{js,jsx,mjs,ts,tsx,mdx}\" --cache"
+    "format:check": "prettier --check \"**/*.{js,jsx,mjs,ts,tsx,mdx}\" --cache",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "@emotion/cache": "11.14.0",
@@ -47,6 +50,7 @@
     "@next/eslint-plugin-next": "15.3.3",
     "@testing-library/jest-dom": "6.6.3",
     "@testing-library/react": "16.3.0",
+    "@testing-library/user-event": "^14.5.1",
     "@types/jest": "29.5.14",
     "@types/node": "24.0.0",
     "@types/react": "19.1.7",

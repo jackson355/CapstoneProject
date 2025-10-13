@@ -34,7 +34,8 @@ filetype>=1.2.0
 openai>=1.0.0
 pydantic>=2.0.0
 
-# Note: For best results, install these system tools:
-# - Pandoc: https://pandoc.org/installing.html (90% accuracy)
-# - LibreOffice: https://www.libreoffice.org/download/ (90% accuracy)
-# Without these, the system falls back to basic python-docx (50% accuracy)
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+httpx>=0.24.0
+

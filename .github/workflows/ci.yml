@@ -58,7 +58,7 @@ jobs:
         run: |
           cd backend
           source venv/bin/activate
-          pytest || echo "No backend tests yet"
+          pytest tests/ -v --tb=short || exit 1
 
       # 3️⃣ Setup frontend (Next.js)
       - name: Set up Node.js
@@ -79,4 +79,4 @@ jobs:
       - name: Run frontend tests
         run: |
           cd frontend
-          npm test || echo "No frontend tests yet"
+          npm test -- --passWithNoTests || exit 1
