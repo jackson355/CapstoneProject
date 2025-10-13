@@ -41,6 +41,8 @@ jobs:
           cd backend
           python -m venv venv
           source venv/bin/activate
+          pip install --upgrade pip setuptools wheel
+          pip install bcrypt==4.0.1
           pip install -r requirements.txt
 
       # Wait until Postgres is ready
