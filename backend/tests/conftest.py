@@ -3,6 +3,13 @@ Test configuration and fixtures for pytest.
 This file sets up the test database and provides common fixtures.
 """
 
+import sys
+from pathlib import Path
+
+# Add backend directory to Python path
+backend_dir = Path(__file__).parent.parent
+sys.path.insert(0, str(backend_dir))
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session

@@ -20,6 +20,10 @@ instance/
 venv/
 env/
 
+# Test-generated files
+backend/uploads/quotations/quotation_*.docx
+backend/test.db
+
 # --- Node / Next.js frontend ---
 frontend/node_modules/
 frontend/.next/
