@@ -116,7 +116,7 @@ export function TemplateLibrary({ onEditTemplate }: TemplateLibraryProps): React
 
       if (result.error) {
         // Check if it's a template-in-use error
-        if (typeof result.error === 'object' && result.error.message) {
+        if (typeof result.error === 'object' && result.error !== null && 'message' in result.error) {
           const errorData = result.error as any;
 
           // Show usage error dialog instead of alert
