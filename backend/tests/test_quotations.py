@@ -77,7 +77,7 @@ class TestQuotationCreation:
         # Verify data
         assert data["client_id"] == test_client_data.id
         assert data["template_id"] == test_template.id
-        assert data["status"] == "unpaid"
+        assert data["status"] == "pending"
         assert data["selected_contact"]["name"] == "John Doe"
         assert data["my_company_info"]["name"] == "My Company Ltd"
 
@@ -324,32 +324,32 @@ class TestQuotationListing:
             "template_id": test_template.id
         }
 
-        # Create unpaid quotation
+        # Create pending quotation
         response1 = client.post("/quotations/", headers=auth_headers, json=quotation_data)
         quotation1_id = response1.json()["id"]
 
-        # Create another and mark as paid
+        # Create another and mark as accepted
         response2 = client.post("/quotations/", headers=auth_headers, json=quotation_data)
         quotation2_id = response2.json()["id"]
         client.put(
             f"/quotations/{quotation2_id}",
             headers=auth_headers,
-            json={"status": "paid"}
+            json={"status": "accepted"}
         )
 
-        # Filter by unpaid
-        response = client.get("/quotations/?status=unpaid", headers=auth_headers)
+        # Filter by pending
+        response = client.get("/quotations/?status=pending", headers=auth_headers)
         assert response.status_code == 200
-        unpaid_quotations = response.json()["quotations"]
-        assert len(unpaid_quotations) == 1
-        assert unpaid_quotations[0]["status"] == "unpaid"
+        pending_quotations = response.json()["quotations"]
+        assert len(pending_quotations) == 1
+        assert pending_quotations[0]["status"] == "pending"
 
-        # Filter by paid
-        response = client.get("/quotations/?status=paid", headers=auth_headers)
+        # Filter by accepted
+        response = client.get("/quotations/?status=accepted", headers=auth_headers)
         assert response.status_code == 200
-        paid_quotations = response.json()["quotations"]
-        assert len(paid_quotations) == 1
-        assert paid_quotations[0]["status"] == "paid"
+        accepted_quotations = response.json()["quotations"]
+        assert len(accepted_quotations) == 1
+        assert accepted_quotations[0]["status"] == "accepted"
 
     @patch('app.services.file_storage.file_storage.file_exists')
     @patch('app.services.file_storage.file_storage.get_docx_content')
@@ -434,15 +434,15 @@ class TestQuotationUpdate:
         create_response = client.post("/quotations/", headers=auth_headers, json=quotation_data)
         quotation_id = create_response.json()["id"]
 
-        # Update status to paid
+        # Update status to accepted
         response = client.put(
             f"/quotations/{quotation_id}",
             headers=auth_headers,
-            json={"status": "paid"}
+            json={"status": "accepted"}
         )
 
         assert response.status_code == 200
-        assert response.json()["status"] == "paid"
+        assert response.json()["status"] == "accepted"
 
         # Verify activity log
         log = db.query(ActivityLog).filter(
@@ -498,7 +498,7 @@ class TestQuotationUpdate:
         response = client.put(
             "/quotations/99999",
             headers=auth_headers,
-            json={"status": "paid"}
+            json={"status": "accepted"}
         )
 
         assert response.status_code == 404
