@@ -233,7 +233,7 @@ export function InvoicesTable(): React.JSX.Element {
     } else {
       setDeleteDialogOpen(false);
       // Check if it's an error with structured data
-      if (typeof result.error === 'object' && result.error !== null && result.error.message) {
+      if (typeof result.error === 'object' && result.error !== null && 'message' in result.error) {
         const errorData = result.error as any;
         // Show usage error dialog instead of alert
         setUsageErrorDialog({ open: true, data: errorData });
