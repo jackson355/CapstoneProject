@@ -224,7 +224,7 @@ export function QuotationsTable(): React.JSX.Element {
     } else {
       setDeleteDialogOpen(false);
       // Check if it's a quotation-in-use error
-      if (typeof result.error === 'object' && result.error !== null && result.error.message) {
+      if (typeof result.error === 'object' && result.error !== null && 'message' in result.error) {
         const errorData = result.error as any;
         // Show usage error dialog instead of alert
         setUsageErrorDialog({ open: true, data: errorData });
