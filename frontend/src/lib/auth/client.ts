@@ -1049,6 +1049,210 @@ class AuthClient {
       return { error: 'Network error' };
     }
   }
+
+  // Invoice API methods
+
+  async getInvoices(page = 0, perPage = 10, filters?: { search?: string; status?: string; client_id?: number; quotation_id?: number }): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const params = new URLSearchParams({ page: String(page), per_page: String(perPage) });
+      if (filters?.search) params.set('search', filters.search);
+      if (filters?.status) params.set('status', filters.status);
+      if (filters?.client_id) params.set('client_id', String(filters.client_id));
+      if (filters?.quotation_id) params.set('quotation_id', String(filters.quotation_id));
+
+      const res = await fetch(`${config.api.baseUrl}/invoices/?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to fetch invoices';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async createInvoice(params: {
+    quotation_id: number;
+    template_id: number;
+    my_company_info?: {
+      name?: string;
+      email?: string;
+      phone?: string;
+      address?: string;
+      website?: string;
+    };
+    due_date?: string;
+  }): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/invoices/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(params),
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to create invoice';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async getInvoiceById(invoiceId: number): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/invoices/${invoiceId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to fetch invoice';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async updateInvoice(invoiceId: number, params: any): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/invoices/${invoiceId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(params),
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to update invoice';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async deleteInvoice(invoiceId: number): Promise<{ error?: string }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/invoices/${invoiceId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to delete invoice';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      return {};
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async getOnlyOfficeConfigForInvoice(invoiceId: number): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/invoices/onlyoffice-config/${invoiceId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to get OnlyOffice configuration';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async checkInvoicePlaceholders(invoiceId: number): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/invoices/${invoiceId}/check-placeholders`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to check placeholders';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
 }
 
 export const authClient = new AuthClient();

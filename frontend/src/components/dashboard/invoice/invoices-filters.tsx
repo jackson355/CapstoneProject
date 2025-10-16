@@ -11,19 +11,19 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Stack from '@mui/material/Stack';
 
-interface QuotationsFiltersProps {
+interface InvoicesFiltersProps {
   value: string;
   onChange: (value: string) => void;
   status: string;
   onStatusChange: (value: string) => void;
 }
 
-export function QuotationsFilters({
+export function InvoicesFilters({
   value,
   onChange,
   status,
   onStatusChange,
-}: QuotationsFiltersProps): React.JSX.Element {
+}: InvoicesFiltersProps): React.JSX.Element {
   return (
     <Card sx={{ p: 2, mb: 3, borderRadius: 3, boxShadow: '0 8px 30px rgba(0,0,0,0.05)' }}>
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
@@ -31,7 +31,7 @@ export function QuotationsFilters({
           value={value}
           onChange={(e) => { onChange(e.target.value); }}
           fullWidth
-          placeholder="Search quotations..."
+          placeholder="Search invoices..."
           startAdornment={
             <InputAdornment position="start">
               <MagnifyingGlassIcon fontSize="var(--icon-fontSize-md)" />
@@ -47,9 +47,8 @@ export function QuotationsFilters({
             onChange={(e) => { onStatusChange(e.target.value); }}
           >
             <MenuItem value="">All Statuses</MenuItem>
-            <MenuItem value="pending">Pending</MenuItem>
-            <MenuItem value="accepted">Accepted</MenuItem>
-            <MenuItem value="rejected">Rejected</MenuItem>
+            <MenuItem value="unpaid">Unpaid</MenuItem>
+            <MenuItem value="paid">Paid</MenuItem>
           </Select>
         </FormControl>
       </Stack>

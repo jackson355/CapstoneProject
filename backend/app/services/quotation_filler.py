@@ -102,23 +102,23 @@ class QuotationFillerService:
         mapping = {}
 
         # Client information
-        mapping['client_company_name'] = str(client_data.get('company_name', ''))
-        mapping['client_uen'] = str(client_data.get('uen', ''))
-        mapping['client_industry'] = str(client_data.get('industry', ''))
-        mapping['client_address'] = str(client_data.get('address', ''))
-        mapping['client_postal_code'] = str(client_data.get('postal_code', ''))
+        mapping['client_company_name'] = str(client_data.get('company_name') or '')
+        mapping['client_uen'] = str(client_data.get('uen') or '')
+        mapping['client_industry'] = str(client_data.get('industry') or '')
+        mapping['client_address'] = str(client_data.get('address') or '')
+        mapping['client_postal_code'] = str(client_data.get('postal_code') or '')
 
         # Contact information
-        mapping['contact_name'] = str(contact_data.get('name', ''))
-        mapping['contact_phone'] = str(contact_data.get('phone', ''))
-        mapping['contact_email'] = str(contact_data.get('email', ''))
+        mapping['contact_name'] = str(contact_data.get('name') or '')
+        mapping['contact_phone'] = str(contact_data.get('phone') or '')
+        mapping['contact_email'] = str(contact_data.get('email') or '')
 
         # User's company information
-        mapping['my_company_name'] = str(company_data.get('name', ''))
-        mapping['my_company_email'] = str(company_data.get('email', ''))
-        mapping['my_company_phone'] = str(company_data.get('phone', ''))
-        mapping['my_company_address'] = str(company_data.get('address', ''))
-        mapping['my_company_website'] = str(company_data.get('website', ''))
+        mapping['my_company_name'] = str(company_data.get('name') or '')
+        mapping['my_company_email'] = str(company_data.get('email') or '')
+        mapping['my_company_phone'] = str(company_data.get('phone') or '')
+        mapping['my_company_address'] = str(company_data.get('address') or '')
+        mapping['my_company_website'] = str(company_data.get('website') or '')
 
         # Date placeholders
         current_date = datetime.now().strftime('%d/%m/%Y')

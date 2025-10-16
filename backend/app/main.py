@@ -6,6 +6,7 @@ from app.api import roles
 from app.api import clients
 from app.api import templates
 from app.api import quotations
+from app.api import invoices
 from app.db.session import get_db
 from app.models import ActivityLog
 from sqlalchemy.orm import Session
@@ -33,6 +34,7 @@ app.include_router(roles.router)
 app.include_router(clients.router)
 app.include_router(templates.router)
 app.include_router(quotations.router)
+app.include_router(invoices.router)
 
 @app.get("/")
 def read_root():

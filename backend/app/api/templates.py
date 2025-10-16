@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 
 from app.db.session import get_db
-from app.models import Template, User, Role, ActivityLog
+from app.models import Template, User, Role, ActivityLog, Quotation, Invoice
 from app.schemas import TemplateCreate, TemplateUpdate, TemplateOut, TemplateListItem, PaginatedTemplatesResponse, UserOut
 from app.api.auth import get_current_user
 from app.services.file_storage import file_storage
@@ -283,6 +283,44 @@ def delete_template(
     template = db.query(Template).filter(Template.id == template_id).first()
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
+
+    # Check if template is being used by any quotations
+    quotations_using_template = db.query(Quotation).filter(Quotation.template_id == template_id).all()
+
+    # Check if template is being used by any invoices
+    invoices_using_template = db.query(Invoice).filter(Invoice.template_id == template_id).all()
+
+    # If template is in use, prevent deletion
+    if quotations_using_template or invoices_using_template:
+        error_details = {
+            "message": "Cannot delete template because it is currently being used",
+            "template_name": template.name,
+            "usage": {
+                "quotations": [
+                    {
+                        "id": q.id,
+                        "quotation_number": q.quotation_number,
+                        "created_at": q.created_at.isoformat()
+                    }
+                    for q in quotations_using_template
+                ],
+                "invoices": [
+                    {
+                        "id": inv.id,
+                        "invoice_number": inv.invoice_number,
+                        "created_at": inv.created_at.isoformat()
+                    }
+                    for inv in invoices_using_template
+                ]
+            },
+            "total_quotations": len(quotations_using_template),
+            "total_invoices": len(invoices_using_template)
+        }
+
+        raise HTTPException(
+            status_code=400,
+            detail=error_details
+        )
 
     template_name = template.name
     template_type = template.template_type

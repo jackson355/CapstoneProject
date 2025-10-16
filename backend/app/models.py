@@ -110,6 +110,54 @@ class Quotation(Base):
     due_date = Column(DateTime(timezone=True), nullable=True)  # When payment is due
 
     # Status tracking
+    status = Column(String(50), default='pending', index=True)  # 'pending', 'accepted', or 'rejected'
+
+    # Placeholder tracking
+    unfilled_placeholders = Column(JSON, nullable=True)  # List of placeholders that haven't been filled
+
+    # Metadata
+    created_by = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    # Relationships
+    client = relationship('Client', foreign_keys=[client_id])
+    template = relationship('Template', foreign_keys=[template_id])
+    creator = relationship('User', foreign_keys=[created_by])
+
+    # Composite index for efficient queries
+    __table_args__ = (
+        {'extend_existing': True}
+    )
+
+class Invoice(Base):
+    __tablename__ = 'invoices'
+
+    id = Column(Integer, primary_key=True, index=True)
+    invoice_number = Column(String(100), unique=True, nullable=False, index=True)  # e.g., "INV-2025-0001"
+
+    # Quotation relationship - REQUIRED (invoice created from paid quotation)
+    quotation_id = Column(Integer, ForeignKey('quotations.id'), nullable=False, index=True)
+
+    # Client relationship (copied from quotation for convenience)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    selected_contact = Column(JSON, nullable=False)  # Store selected contact info from quotation
+
+    # Template relationship
+    template_id = Column(Integer, ForeignKey('templates.id'), nullable=False, index=True)
+
+    # User's company information (JSON field for flexibility)
+    my_company_info = Column(JSON, nullable=True)  # Stores company data like name, email, phone, address, website
+
+    # Invoice document
+    file_path = Column(String(500), nullable=True)  # Path to filled invoice DOCX
+    file_name = Column(String(255), nullable=True)  # Original filename
+    file_size = Column(Integer, nullable=True)  # File size in bytes
+
+    # Due date
+    due_date = Column(DateTime(timezone=True), nullable=True)  # When payment is due
+
+    # Status tracking
     status = Column(String(50), default='unpaid', index=True)  # 'unpaid' or 'paid'
 
     # Placeholder tracking
@@ -121,6 +169,7 @@ class Quotation(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     # Relationships
+    quotation = relationship('Quotation', foreign_keys=[quotation_id])
     client = relationship('Client', foreign_keys=[client_id])
     template = relationship('Template', foreign_keys=[template_id])
     creator = relationship('User', foreign_keys=[created_by])

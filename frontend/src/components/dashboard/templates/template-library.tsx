@@ -33,6 +33,7 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   OpenInNew as OpenInNewIcon,
+  Warning as WarningIcon,
 } from '@mui/icons-material';
 import { authClient } from '@/lib/auth/client';
 
@@ -48,6 +49,7 @@ export function TemplateLibrary({ onEditTemplate }: TemplateLibraryProps): React
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
   const [snackbar, setSnackbar] = React.useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const [usageErrorDialog, setUsageErrorDialog] = React.useState<{ open: boolean; data: any }>({ open: false, data: null });
 
   React.useEffect(() => {
     const fetchTemplates = async () => {
@@ -113,7 +115,20 @@ export function TemplateLibrary({ onEditTemplate }: TemplateLibraryProps): React
       const result = await authClient.deleteTemplate(selectedTemplate.id);
 
       if (result.error) {
-        throw new Error(result.error);
+        // Check if it's a template-in-use error
+        if (typeof result.error === 'object' && result.error.message) {
+          const errorData = result.error as any;
+
+          // Show usage error dialog instead of alert
+          setUsageErrorDialog({ open: true, data: errorData });
+        } else {
+          throw new Error(typeof result.error === 'string' ? result.error : JSON.stringify(result.error));
+        }
+
+        setDeleting(false);
+        setDeleteDialogOpen(false);
+        handleMenuClose();
+        return;
       }
 
       console.log('Template deleted successfully from server'); // Debug log
@@ -384,6 +399,82 @@ export function TemplateLibrary({ onEditTemplate }: TemplateLibraryProps): React
         </Alert>
       </Snackbar>
 
+      {/* Template In-Use Error Dialog */}
+      <Dialog
+        open={usageErrorDialog.open}
+        onClose={() => setUsageErrorDialog({ open: false, data: null })}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'warning.main' }}>
+          <WarningIcon />
+          Cannot Delete Template
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2}>
+            <Alert severity="warning" sx={{ mb: 1 }}>
+              This template is currently being used and cannot be deleted.
+            </Alert>
+
+            {usageErrorDialog.data && (
+              <>
+                <Typography variant="body2" color="text.secondary">
+                  <strong>Template:</strong> {usageErrorDialog.data.template_name}
+                </Typography>
+
+                {usageErrorDialog.data.usage?.quotations && usageErrorDialog.data.usage.quotations.length > 0 && (
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                      Used in {usageErrorDialog.data.total_quotations} Quotation{usageErrorDialog.data.total_quotations > 1 ? 's' : ''}:
+                    </Typography>
+                    <List dense sx={{ bgcolor: 'background.default', borderRadius: 1, p: 1 }}>
+                      {usageErrorDialog.data.usage.quotations.map((q: any) => (
+                        <ListItem key={q.id} sx={{ py: 0.5 }}>
+                          <ListItemText
+                            primary={q.quotation_number}
+                            secondary={`Created: ${new Date(q.created_at).toLocaleDateString()}`}
+                            primaryTypographyProps={{ variant: 'body2', fontWeight: 500 }}
+                            secondaryTypographyProps={{ variant: 'caption' }}
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Box>
+                )}
+
+                {usageErrorDialog.data.usage?.invoices && usageErrorDialog.data.usage.invoices.length > 0 && (
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                      Used in {usageErrorDialog.data.total_invoices} Invoice{usageErrorDialog.data.total_invoices > 1 ? 's' : ''}:
+                    </Typography>
+                    <List dense sx={{ bgcolor: 'background.default', borderRadius: 1, p: 1 }}>
+                      {usageErrorDialog.data.usage.invoices.map((inv: any) => (
+                        <ListItem key={inv.id} sx={{ py: 0.5 }}>
+                          <ListItemText
+                            primary={inv.invoice_number}
+                            secondary={`Created: ${new Date(inv.created_at).toLocaleDateString()}`}
+                            primaryTypographyProps={{ variant: 'body2', fontWeight: 500 }}
+                            secondaryTypographyProps={{ variant: 'caption' }}
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Box>
+                )}
+
+                <Alert severity="info" sx={{ mt: 1 }}>
+                  To delete this template, you must first delete or update all quotations and invoices that use it.
+                </Alert>
+              </>
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setUsageErrorDialog({ open: false, data: null })} variant="contained">
+            Got it
+          </Button>
+        </DialogActions>
+      </Dialog>
 
     </Box>
   );

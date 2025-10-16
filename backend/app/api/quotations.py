@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 
 from app.db.session import get_db
-from app.models import Quotation, Client, Template, User, Role, ActivityLog
+from app.models import Quotation, Client, Template, User, Role, ActivityLog, Invoice
 from app.schemas import QuotationCreate, QuotationUpdate, QuotationOut, QuotationListItem, PaginatedQuotationsResponse, UserOut
 from app.api.auth import get_current_user
 from app.services.file_storage import file_storage
@@ -260,6 +260,27 @@ def delete_quotation(
     quotation = db.query(Quotation).filter(Quotation.id == quotation_id).first()
     if not quotation:
         raise HTTPException(status_code=404, detail="Quotation not found")
+
+    # Check if quotation is being used by any invoices
+    invoices_using_quotation = db.query(Invoice).filter(Invoice.quotation_id == quotation_id).all()
+
+    # If quotation is in use, prevent deletion
+    if invoices_using_quotation:
+        error_details = {
+            "message": "Cannot delete quotation because it is currently being used by invoices",
+            "quotation_number": quotation.quotation_number,
+            "usage": {
+                "invoices": [
+                    {
+                        "id": inv.id,
+                        "invoice_number": inv.invoice_number,
+                        "created_at": inv.created_at.isoformat()
+                    }
+                    for inv in invoices_using_quotation
+                ]
+            }
+        }
+        raise HTTPException(status_code=400, detail=error_details)
 
     quotation_number = quotation.quotation_number
 

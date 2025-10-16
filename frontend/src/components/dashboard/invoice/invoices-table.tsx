@@ -36,7 +36,7 @@ import Box from '@mui/material/Box';
 import { PaginationBar } from '@/components/common/pagination-bar';
 import TableSortLabel from '@mui/material/TableSortLabel';
 
-import { QuotationsFilters } from './quotations-filters';
+import { InvoicesFilters } from './invoices-filters';
 import { config } from '@/config';
 import { paths } from '@/paths';
 import { authClient } from '@/lib/auth/client';
@@ -47,9 +47,10 @@ interface ContactInfo {
   email: string;
 }
 
-export interface QuotationRow {
+export interface InvoiceRow {
   id: number;
-  quotation_number: string;
+  invoice_number: string;
+  quotation_id: number;
   client_id: number;
   selected_contact: ContactInfo;
   template_id: number;
@@ -59,15 +60,15 @@ export interface QuotationRow {
   updated_at: string;
 }
 
-interface PaginatedQuotationsResponse {
-  quotations: QuotationRow[];
+interface PaginatedInvoicesResponse {
+  invoices: InvoiceRow[];
   total: number;
   page: number;
   per_page: number;
 }
 
-export function QuotationsTable(): React.JSX.Element {
-  const [rows, setRows] = React.useState<QuotationRow[]>([]);
+export function InvoicesTable(): React.JSX.Element {
+  const [rows, setRows] = React.useState<InvoiceRow[]>([]);
   const [count, setCount] = React.useState<number>(0);
   const [page, setPage] = React.useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = React.useState<number>(10);
@@ -75,12 +76,13 @@ export function QuotationsTable(): React.JSX.Element {
   const [status, setStatus] = React.useState<string>('');
   const [loading, setLoading] = React.useState<boolean>(false);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const [selectedQuotation, setSelectedQuotation] = React.useState<QuotationRow | null>(null);
+  const [selectedInvoice, setSelectedInvoice] = React.useState<InvoiceRow | null>(null);
   const [clients, setClients] = React.useState<Record<number, any>>({});
+  const [quotations, setQuotations] = React.useState<Record<number, any>>({});
 
   // Edit dialog state
   const [editDialogOpen, setEditDialogOpen] = React.useState<boolean>(false);
-  const [editingQuotation, setEditingQuotation] = React.useState<QuotationRow | null>(null);
+  const [editingInvoice, setEditingInvoice] = React.useState<InvoiceRow | null>(null);
   const [editStatus, setEditStatus] = React.useState<string>('');
   const [editDueDate, setEditDueDate] = React.useState<string>('');
 
@@ -93,20 +95,20 @@ export function QuotationsTable(): React.JSX.Element {
   // Debounce search
   const debouncedSearch = useDebounce(search, 300);
 
-  const fetchQuotations = React.useCallback(async () => {
+  const fetchInvoices = React.useCallback(async () => {
     setLoading(true);
     try {
-      const result = await authClient.getQuotations(page, rowsPerPage, {
+      const result = await authClient.getInvoices(page, rowsPerPage, {
         search: debouncedSearch,
         status: status || undefined,
       });
 
       if (result.data) {
-        setRows(result.data.quotations);
+        setRows(result.data.invoices);
         setCount(result.data.total);
 
-        // Fetch client data for all quotations
-        const clientIds = [...new Set(result.data.quotations.map((q: QuotationRow) => q.client_id))] as number[];
+        // Fetch client data for all invoices
+        const clientIds = [...new Set(result.data.invoices.map((i: InvoiceRow) => i.client_id))] as number[];
         const clientsData: Record<number, any> = {};
 
         for (const clientId of clientIds) {
@@ -117,17 +119,30 @@ export function QuotationsTable(): React.JSX.Element {
         }
 
         setClients(clientsData);
+
+        // Fetch quotation data for all invoices
+        const quotationIds = [...new Set(result.data.invoices.map((i: InvoiceRow) => i.quotation_id))] as number[];
+        const quotationsData: Record<number, any> = {};
+
+        for (const quotationId of quotationIds) {
+          const quotationResult = await authClient.getQuotationById(quotationId);
+          if (quotationResult.data) {
+            quotationsData[quotationId] = quotationResult.data;
+          }
+        }
+
+        setQuotations(quotationsData);
       }
     } catch (error) {
-      console.error('Error fetching quotations:', error);
+      console.error('Error fetching invoices:', error);
     } finally {
       setLoading(false);
     }
   }, [page, rowsPerPage, debouncedSearch, status]);
 
   React.useEffect(() => {
-    fetchQuotations();
-  }, [fetchQuotations]);
+    fetchInvoices();
+  }, [fetchInvoices]);
 
   const handlePageChange = (_: unknown, newPage: number) => {
     setPage(newPage);
@@ -138,40 +153,38 @@ export function QuotationsTable(): React.JSX.Element {
     setPage(0);
   };
 
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, quotation: QuotationRow) => {
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, invoice: InvoiceRow) => {
     setAnchorEl(event.currentTarget);
-    setSelectedQuotation(quotation);
+    setSelectedInvoice(invoice);
   };
 
   const handleMenuClose = () => {
     setAnchorEl(null);
-    // Don't clear selectedQuotation here - let individual handlers clear it when needed
+    // Don't clear selectedInvoice here - let individual handlers clear it when needed
   };
 
   const handleEditDocument = () => {
-    if (selectedQuotation) {
-      window.location.href = paths.dashboard.editQuotation(selectedQuotation.id);
+    if (selectedInvoice) {
+      window.location.href = paths.dashboard.editInvoice(selectedInvoice.id);
     }
     handleMenuClose();
   };
 
   const handleEditDetails = () => {
-    if (selectedQuotation) {
-      setEditingQuotation(selectedQuotation);
-      setEditStatus(selectedQuotation.status);
-      setEditDueDate(selectedQuotation.due_date ? new Date(selectedQuotation.due_date).toISOString().split('T')[0] : '');
+    if (selectedInvoice) {
+      setEditingInvoice(selectedInvoice);
+      setEditStatus(selectedInvoice.status);
+      setEditDueDate(selectedInvoice.due_date ? new Date(selectedInvoice.due_date).toISOString().split('T')[0] : '');
       setEditDialogOpen(true);
     }
     handleMenuClose();
   };
 
   const handleSaveDetails = async () => {
-    if (!editingQuotation) {
-      console.error('No quotation selected for editing');
+    if (!editingInvoice) {
+      console.error('No invoice selected for editing');
       return;
     }
-
-    console.log('Saving details:', { status: editStatus, due_date: editDueDate });
 
     const updates: any = {
       status: editStatus,
@@ -183,18 +196,14 @@ export function QuotationsTable(): React.JSX.Element {
       updates.due_date = null;
     }
 
-    console.log('Sending update:', updates);
-
-    const result = await authClient.updateQuotation(editingQuotation.id, updates);
-
-    console.log('Update result:', result);
+    const result = await authClient.updateInvoice(editingInvoice.id, updates);
 
     if (!result.error) {
       setEditDialogOpen(false);
-      setEditingQuotation(null);
+      setEditingInvoice(null);
       setEditStatus('');
       setEditDueDate('');
-      await fetchQuotations();
+      await fetchInvoices();
     } else {
       console.error('Update error:', result.error);
       alert(result.error);
@@ -203,7 +212,7 @@ export function QuotationsTable(): React.JSX.Element {
 
   const handleCancelEdit = () => {
     setEditDialogOpen(false);
-    setEditingQuotation(null);
+    setEditingInvoice(null);
     setEditStatus('');
     setEditDueDate('');
   };
@@ -214,16 +223,16 @@ export function QuotationsTable(): React.JSX.Element {
   };
 
   const handleDeleteConfirm = async () => {
-    if (!selectedQuotation) return;
+    if (!selectedInvoice) return;
 
-    const result = await authClient.deleteQuotation(selectedQuotation.id);
+    const result = await authClient.deleteInvoice(selectedInvoice.id);
     if (!result.error) {
       setDeleteDialogOpen(false);
-      setSelectedQuotation(null);
-      fetchQuotations();
+      setSelectedInvoice(null);
+      fetchInvoices();
     } else {
       setDeleteDialogOpen(false);
-      // Check if it's a quotation-in-use error
+      // Check if it's an error with structured data
       if (typeof result.error === 'object' && result.error !== null && result.error.message) {
         const errorData = result.error as any;
         // Show usage error dialog instead of alert
@@ -240,21 +249,15 @@ export function QuotationsTable(): React.JSX.Element {
 
   const handleDeleteCancel = () => {
     setDeleteDialogOpen(false);
-    setSelectedQuotation(null);
+    setSelectedInvoice(null);
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'accepted': return 'success';
-      case 'pending': return 'warning';
-      case 'rejected': return 'error';
+      case 'paid': return 'success';
+      case 'unpaid': return 'warning';
       default: return 'default';
     }
-  };
-
-  const formatAmount = (amount?: number, currency: string = 'SGD') => {
-    if (!amount) return '-';
-    return `${currency} ${(amount / 100).toFixed(2)}`;
   };
 
   const formatDate = (dateString?: string) => {
@@ -263,10 +266,10 @@ export function QuotationsTable(): React.JSX.Element {
   };
 
   // Sorting state
-  const [orderBy, setOrderBy] = React.useState<'quotation_number' | 'created_at' | 'status'>('created_at');
+  const [orderBy, setOrderBy] = React.useState<'invoice_number' | 'created_at' | 'status'>('created_at');
   const [order, setOrder] = React.useState<'asc' | 'desc'>('desc');
 
-  const handleRequestSort = (property: 'quotation_number' | 'created_at' | 'status') => {
+  const handleRequestSort = (property: 'invoice_number' | 'created_at' | 'status') => {
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(property);
@@ -277,8 +280,8 @@ export function QuotationsTable(): React.JSX.Element {
     data.sort((a, b) => {
       let res = 0;
       switch (orderBy) {
-        case 'quotation_number':
-          res = a.quotation_number.localeCompare(b.quotation_number);
+        case 'invoice_number':
+          res = a.invoice_number.localeCompare(b.invoice_number);
           break;
         case 'created_at':
           res = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
@@ -296,7 +299,7 @@ export function QuotationsTable(): React.JSX.Element {
 
   return (
     <>
-      <QuotationsFilters
+      <InvoicesFilters
         value={search}
         onChange={(v) => { setSearch(v); setPage(0); }}
         status={status}
@@ -304,7 +307,7 @@ export function QuotationsTable(): React.JSX.Element {
       />
       <Card variant="outlined" sx={{ borderRadius: 3, boxShadow: '0 8px 30px rgba(0,0,0,0.05)' }}>
         <TableContainer sx={{ maxWidth: '100%', overflowX: 'auto' }}>
-          <Table sx={{ minWidth: '1100px' }}>
+          <Table sx={{ minWidth: '1200px' }}>
             <TableHead
               sx={{
                 position: 'sticky',
@@ -315,15 +318,16 @@ export function QuotationsTable(): React.JSX.Element {
               }}
             >
               <TableRow>
-                <TableCell sortDirection={orderBy === 'quotation_number' ? order : false}>
+                <TableCell sortDirection={orderBy === 'invoice_number' ? order : false}>
                   <TableSortLabel
-                    active={orderBy === 'quotation_number'}
-                    direction={orderBy === 'quotation_number' ? order : 'asc'}
-                    onClick={() => handleRequestSort('quotation_number')}
+                    active={orderBy === 'invoice_number'}
+                    direction={orderBy === 'invoice_number' ? order : 'asc'}
+                    onClick={() => handleRequestSort('invoice_number')}
                   >
-                    Quotation No.
+                    Invoice No.
                   </TableSortLabel>
                 </TableCell>
+                <TableCell>Quotation No.</TableCell>
                 <TableCell>Client</TableCell>
                 <TableCell>Contact Person</TableCell>
                 <TableCell>Email</TableCell>
@@ -354,6 +358,7 @@ export function QuotationsTable(): React.JSX.Element {
                 Array.from({ length: Math.max(5, rowsPerPage) }).map((_, idx) => (
                   <TableRow key={idx}>
                     <TableCell><Skeleton variant="text" width={120} /></TableCell>
+                    <TableCell><Skeleton variant="text" width={120} /></TableCell>
                     <TableCell><Skeleton variant="text" width={140} /></TableCell>
                     <TableCell><Skeleton variant="text" width={120} /></TableCell>
                     <TableCell><Skeleton variant="text" width={180} /></TableCell>
@@ -366,6 +371,7 @@ export function QuotationsTable(): React.JSX.Element {
               ) : sortedRows.length > 0 ? (
                 sortedRows.map((row) => {
                   const client = clients[row.client_id];
+                  const quotation = quotations[row.quotation_id];
                   return (
                     <TableRow
                       hover
@@ -377,9 +383,10 @@ export function QuotationsTable(): React.JSX.Element {
                     >
                       <TableCell>
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {row.quotation_number}
+                          {row.invoice_number}
                         </Typography>
                       </TableCell>
+                      <TableCell>{quotation?.quotation_number || '-'}</TableCell>
                       <TableCell>{client?.company_name || '-'}</TableCell>
                       <TableCell>{row.selected_contact.name}</TableCell>
                       <TableCell>{row.selected_contact.email}</TableCell>
@@ -403,14 +410,14 @@ export function QuotationsTable(): React.JSX.Element {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} align="center">
+                  <TableCell colSpan={9} align="center">
                     <Stack spacing={1} sx={{ alignItems: 'center', py: 6 }}>
-                      <Typography variant="h6">No quotations found</Typography>
+                      <Typography variant="h6">No invoices found</Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Try adjusting your search or create a new quotation.
+                        Try adjusting your search or create a new invoice.
                       </Typography>
-                      <Button component={Link} href={paths.dashboard.createQuotation} variant="contained" size="small" sx={{ mt: 1 }}>
-                        Create Quotation
+                      <Button component={Link} href={paths.dashboard.createInvoice} variant="contained" size="small" sx={{ mt: 1 }}>
+                        Create Invoice
                       </Button>
                     </Stack>
                   </TableCell>
@@ -445,7 +452,7 @@ export function QuotationsTable(): React.JSX.Element {
 
       {/* Edit Details Dialog */}
       <Dialog open={editDialogOpen} onClose={handleCancelEdit} maxWidth="sm" fullWidth>
-        <DialogTitle>Edit Quotation Details</DialogTitle>
+        <DialogTitle>Edit Invoice Details</DialogTitle>
         <DialogContent>
           <Stack spacing={3} sx={{ mt: 2 }}>
             <FormControl fullWidth>
@@ -455,9 +462,8 @@ export function QuotationsTable(): React.JSX.Element {
                 label="Status"
                 onChange={(e) => setEditStatus(e.target.value)}
               >
-                <MenuItem value="pending">Pending</MenuItem>
-                <MenuItem value="accepted">Accepted</MenuItem>
-                <MenuItem value="rejected">Rejected</MenuItem>
+                <MenuItem value="unpaid">Unpaid</MenuItem>
+                <MenuItem value="paid">Paid</MenuItem>
               </Select>
             </FormControl>
 
@@ -495,14 +501,14 @@ export function QuotationsTable(): React.JSX.Element {
       >
         <DialogTitle sx={{ pb: 2 }}>
           <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
-            Delete Quotation
+            Delete Invoice
           </Typography>
         </DialogTitle>
         <DialogContent>
           <Typography variant="body1" color="text.secondary">
-            Are you sure you want to delete quotation{' '}
+            Are you sure you want to delete invoice{' '}
             <Typography component="span" sx={{ fontWeight: 600, color: 'text.primary' }}>
-              {selectedQuotation?.quotation_number}
+              {selectedInvoice?.invoice_number}
             </Typography>
             ? This action cannot be undone.
           </Typography>
@@ -522,53 +528,27 @@ export function QuotationsTable(): React.JSX.Element {
         </DialogActions>
       </Dialog>
 
-      {/* Quotation In-Use Error Dialog */}
+      {/* Invoice Error Dialog */}
       <Dialog
         open={usageErrorDialog.open}
         onClose={() => setUsageErrorDialog({ open: false, data: null })}
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'warning.main' }}>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'error.main' }}>
           <WarningIcon />
-          Cannot Delete Quotation
+          Error Deleting Invoice
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2}>
-            <Alert severity="warning" sx={{ mb: 1 }}>
-              This quotation is currently being used and cannot be deleted.
+            <Alert severity="error" sx={{ mb: 1 }}>
+              {usageErrorDialog.data?.message || 'An error occurred while deleting the invoice.'}
             </Alert>
 
-            {usageErrorDialog.data && (
-              <>
-                <Typography variant="body2" color="text.secondary">
-                  <strong>Quotation:</strong> {usageErrorDialog.data.quotation_number}
-                </Typography>
-
-                {usageErrorDialog.data.usage?.invoices && usageErrorDialog.data.usage.invoices.length > 0 && (
-                  <Box>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                      Used in {usageErrorDialog.data.usage.invoices.length} Invoice{usageErrorDialog.data.usage.invoices.length > 1 ? 's' : ''}:
-                    </Typography>
-                    <List dense sx={{ bgcolor: 'background.default', borderRadius: 1, p: 1 }}>
-                      {usageErrorDialog.data.usage.invoices.map((inv: any) => (
-                        <ListItem key={inv.id} sx={{ py: 0.5 }}>
-                          <ListItemText
-                            primary={inv.invoice_number}
-                            secondary={`Created: ${new Date(inv.created_at).toLocaleDateString()}`}
-                            primaryTypographyProps={{ variant: 'body2', fontWeight: 500 }}
-                            secondaryTypographyProps={{ variant: 'caption' }}
-                          />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </Box>
-                )}
-
-                <Alert severity="info" sx={{ mt: 1 }}>
-                  To delete this quotation, you must first delete all invoices that use it.
-                </Alert>
-              </>
+            {usageErrorDialog.data && usageErrorDialog.data.invoice_number && (
+              <Typography variant="body2" color="text.secondary">
+                <strong>Invoice:</strong> {usageErrorDialog.data.invoice_number}
+              </Typography>
             )}
           </Stack>
         </DialogContent>

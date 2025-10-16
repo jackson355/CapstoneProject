@@ -14,31 +14,29 @@ class CompanyInfo(BaseModel):
     address: Optional[str] = None
     website: Optional[str] = None
 
-class QuotationBase(BaseModel):
+class InvoiceBase(BaseModel):
+    quotation_id: int
     client_id: int
     selected_contact: ContactInfo
     template_id: int
-    status: str = "pending"
+    status: str = "unpaid"
 
-class QuotationCreate(BaseModel):
-    client_id: int
-    selected_contact: ContactInfo
+class InvoiceCreate(BaseModel):
+    quotation_id: int
     template_id: int
     my_company_info: Optional[CompanyInfo] = None
     due_date: Optional[datetime] = None
 
-class QuotationUpdate(BaseModel):
-    client_id: Optional[int] = None
-    selected_contact: Optional[ContactInfo] = None
-    template_id: Optional[int] = None
+class InvoiceUpdate(BaseModel):
     status: Optional[str] = None
     my_company_info: Optional[CompanyInfo] = None
     due_date: Optional[datetime] = None
     unfilled_placeholders: Optional[List[str]] = None
 
-class QuotationOut(BaseModel):
+class InvoiceOut(BaseModel):
     id: int
-    quotation_number: str
+    invoice_number: str
+    quotation_id: int
     client_id: int
     selected_contact: ContactInfo
     template_id: int
@@ -55,22 +53,22 @@ class QuotationOut(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-class QuotationListItem(BaseModel):
+class InvoiceListItem(BaseModel):
     id: int
-    quotation_number: str
+    invoice_number: str
+    quotation_id: int
     client_id: int
     selected_contact: ContactInfo
     template_id: int
     status: str
-    my_company_info: Optional[Dict[str, Any]] = None
     due_date: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 
-class PaginatedQuotationsResponse(BaseModel):
-    quotations: List[QuotationListItem]
+class PaginatedInvoicesResponse(BaseModel):
+    invoices: List[InvoiceListItem]
     total: int
     page: int
     per_page: int

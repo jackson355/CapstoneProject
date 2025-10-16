@@ -7,6 +7,7 @@ export const navItems = [
   { key: 'users', title: 'User Management', href: paths.dashboard.users, icon: 'users' },
   { key: 'templates', title: 'Template Management', href: paths.dashboard.templates, icon: 'file-text' },
   { key: 'quotations', title: 'Quotation Management', href: paths.dashboard.quotations, icon: 'receipt' },
+  { key: 'invoices', title: 'Invoice Management', href: paths.dashboard.invoices, icon: 'file-invoice' },
   { key: 'settings', title: 'Settings', href: paths.dashboard.settings, icon: 'gear-six' },
   { key: 'account', title: 'Account', href: paths.dashboard.account, icon: 'user' },
 ] satisfies NavItemConfig[];
