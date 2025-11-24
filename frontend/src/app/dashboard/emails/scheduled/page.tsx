@@ -13,7 +13,6 @@ import {
   Divider,
   FormControl,
   FormControlLabel,
-  Grid,
   IconButton,
   InputLabel,
   MenuItem,
@@ -420,38 +419,35 @@ export default function ScheduledEmailsPage(): React.JSX.Element {
 
             {formData.is_recurring && (
               <>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} md={6}>
-                    <FormControl fullWidth>
-                      <InputLabel>Frequency</InputLabel>
-                      <Select
-                        value={formData.frequency}
-                        label="Frequency"
-                        onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
-                      >
-                        <MenuItem value="daily">Daily</MenuItem>
-                        <MenuItem value="weekly">Weekly</MenuItem>
-                        <MenuItem value="monthly">Monthly</MenuItem>
-                      </Select>
-                      <Typography variant="caption" sx={{ mt: 0.5, color: 'text.secondary' }}>
-                        How often to repeat this email
-                      </Typography>
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      type="number"
-                      label="Interval"
-                      value={formData.interval}
-                      onChange={(e) =>
-                        setFormData({ ...formData, interval: parseInt(e.target.value) })
-                      }
-                      inputProps={{ min: 1 }}
-                      helperText="Repeat every N days/weeks/months"
-                    />
-                  </Grid>
-                </Grid>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
+                  <FormControl fullWidth>
+                    <InputLabel>Frequency</InputLabel>
+                    <Select
+                      value={formData.frequency}
+                      label="Frequency"
+                      onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
+                    >
+                      <MenuItem value="daily">Daily</MenuItem>
+                      <MenuItem value="weekly">Weekly</MenuItem>
+                      <MenuItem value="monthly">Monthly</MenuItem>
+                    </Select>
+                    <Typography variant="caption" sx={{ mt: 0.5, color: 'text.secondary' }}>
+                      How often to repeat this email
+                    </Typography>
+                  </FormControl>
+
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="Interval"
+                    value={formData.interval}
+                    onChange={(e) =>
+                      setFormData({ ...formData, interval: parseInt(e.target.value) })
+                    }
+                    inputProps={{ min: 1 }}
+                    helperText="Repeat every N days/weeks/months"
+                  />
+                </Box>
 
                 <TextField
                   fullWidth

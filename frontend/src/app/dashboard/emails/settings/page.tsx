@@ -10,7 +10,6 @@ import {
   Divider,
   FormControl,
   FormControlLabel,
-  Grid,
   InputLabel,
   MenuItem,
   Select,
@@ -208,21 +207,17 @@ export default function EmailSettingsPage(): React.JSX.Element {
           <CardHeader title="Email Provider" />
           <Divider />
           <CardContent>
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel>Email Provider</InputLabel>
-                  <Select
-                    value={settings.provider}
-                    label="Email Provider"
-                    onChange={(e) => setSettings((prev) => ({ ...prev, provider: e.target.value }))}
-                  >
-                    <MenuItem value="smtp">SMTP (Generic)</MenuItem>
-                    <MenuItem value="sendgrid">SendGrid</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
+            <FormControl fullWidth>
+              <InputLabel>Email Provider</InputLabel>
+              <Select
+                value={settings.provider}
+                label="Email Provider"
+                onChange={(e) => setSettings((prev) => ({ ...prev, provider: e.target.value }))}
+              >
+                <MenuItem value="smtp">SMTP (Generic)</MenuItem>
+                <MenuItem value="sendgrid">SendGrid</MenuItem>
+              </Select>
+            </FormControl>
           </CardContent>
         </Card>
 
@@ -231,8 +226,8 @@ export default function EmailSettingsPage(): React.JSX.Element {
             <CardHeader title="SMTP Configuration" />
           <Divider />
           <CardContent>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={8}>
+            <Stack spacing={3}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 3 }}>
                 <TextField
                   fullWidth
                   label="SMTP Server"
@@ -241,8 +236,6 @@ export default function EmailSettingsPage(): React.JSX.Element {
                   placeholder="smtp.gmail.com"
                   helperText="SMTP server hostname"
                 />
-              </Grid>
-              <Grid item xs={12} md={4}>
                 <TextField
                   fullWidth
                   label="Port"
@@ -251,8 +244,8 @@ export default function EmailSettingsPage(): React.JSX.Element {
                   onChange={handleChange('smtp_port')}
                   helperText="Usually 587 for TLS"
                 />
-              </Grid>
-              <Grid item xs={12} md={6}>
+              </Box>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
                 <TextField
                   fullWidth
                   label="Username"
@@ -261,8 +254,6 @@ export default function EmailSettingsPage(): React.JSX.Element {
                   placeholder="your-email@gmail.com"
                   helperText="SMTP username (usually your email)"
                 />
-              </Grid>
-              <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="Password"
@@ -284,30 +275,28 @@ export default function EmailSettingsPage(): React.JSX.Element {
                     ),
                   }}
                 />
-              </Grid>
-              <Grid item xs={12}>
-                <Stack direction="row" spacing={3}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={settings.use_tls}
-                        onChange={handleChange('use_tls')}
-                      />
-                    }
-                    label="Use TLS"
-                  />
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={settings.use_ssl}
-                        onChange={handleChange('use_ssl')}
-                      />
-                    }
-                    label="Use SSL"
-                  />
-                </Stack>
-              </Grid>
-            </Grid>
+              </Box>
+              <Stack direction="row" spacing={3}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={settings.use_tls}
+                      onChange={handleChange('use_tls')}
+                    />
+                  }
+                  label="Use TLS"
+                />
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={settings.use_ssl}
+                      onChange={handleChange('use_ssl')}
+                    />
+                  }
+                  label="Use SSL"
+                />
+              </Stack>
+            </Stack>
           </CardContent>
         </Card>
         )}
@@ -317,44 +306,40 @@ export default function EmailSettingsPage(): React.JSX.Element {
             <CardHeader title="SendGrid Configuration" />
             <Divider />
             <CardContent>
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="SendGrid API Key"
-                    type={showPassword ? 'text' : 'password'}
-                    value={settings.sendgrid_api_key}
-                    onChange={handleChange('sendgrid_api_key')}
-                    placeholder={settingsId ? "Leave empty to keep current API key" : "Enter your SendGrid API key"}
-                    helperText="You can find this in your SendGrid account settings"
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            onClick={() => setShowPassword(!showPassword)}
-                            edge="end"
-                          >
-                            {showPassword ? <EyeSlashIcon /> : <EyeIcon />}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <Alert severity="info">
-                    <strong>SendGrid Setup:</strong>
-                    <br />
-                    1. Log in to your SendGrid account
-                    <br />
-                    2. Go to Settings → API Keys
-                    <br />
-                    3. Create a new API key with "Mail Send" permissions
-                    <br />
-                    4. Copy and paste the API key above
-                  </Alert>
-                </Grid>
-              </Grid>
+              <Stack spacing={3}>
+                <TextField
+                  fullWidth
+                  label="SendGrid API Key"
+                  type={showPassword ? 'text' : 'password'}
+                  value={settings.sendgrid_api_key}
+                  onChange={handleChange('sendgrid_api_key')}
+                  placeholder={settingsId ? "Leave empty to keep current API key" : "Enter your SendGrid API key"}
+                  helperText="You can find this in your SendGrid account settings"
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => setShowPassword(!showPassword)}
+                          edge="end"
+                        >
+                          {showPassword ? <EyeSlashIcon /> : <EyeIcon />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+                <Alert severity="info">
+                  <strong>SendGrid Setup:</strong>
+                  <br />
+                  1. Log in to your SendGrid account
+                  <br />
+                  2. Go to Settings → API Keys
+                  <br />
+                  3. Create a new API key with "Mail Send" permissions
+                  <br />
+                  4. Copy and paste the API key above
+                </Alert>
+              </Stack>
             </CardContent>
           </Card>
         )}
@@ -363,8 +348,8 @@ export default function EmailSettingsPage(): React.JSX.Element {
           <CardHeader title="Email Details" />
           <Divider />
           <CardContent>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+            <Stack spacing={3}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
                 <TextField
                   fullWidth
                   label="From Email"
@@ -374,8 +359,6 @@ export default function EmailSettingsPage(): React.JSX.Element {
                   placeholder="noreply@company.com"
                   helperText="Email address shown as sender"
                 />
-              </Grid>
-              <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="From Name"
@@ -384,19 +367,17 @@ export default function EmailSettingsPage(): React.JSX.Element {
                   placeholder="Your Company"
                   helperText="Name shown as sender"
                 />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Reply-To Email (Optional)"
-                  type="email"
-                  value={settings.reply_to_email}
-                  onChange={handleChange('reply_to_email')}
-                  placeholder="support@company.com"
-                  helperText="Email address for replies"
-                />
-              </Grid>
-            </Grid>
+              </Box>
+              <TextField
+                fullWidth
+                label="Reply-To Email (Optional)"
+                type="email"
+                value={settings.reply_to_email}
+                onChange={handleChange('reply_to_email')}
+                placeholder="support@company.com"
+                helperText="Email address for replies"
+              />
+            </Stack>
           </CardContent>
         </Card>
 

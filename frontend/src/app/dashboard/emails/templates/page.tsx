@@ -15,7 +15,6 @@ import {
   Divider,
   FormControl,
   FormControlLabel,
-  Grid,
   IconButton,
   InputLabel,
   MenuItem,
@@ -245,13 +244,23 @@ export default function EmailTemplatesPage(): React.JSX.Element {
           </FormControl>
         </Card>
 
-        <Grid container spacing={3}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              md: 'repeat(2, 1fr)',
+              lg: 'repeat(3, 1fr)'
+            },
+            gap: 3
+          }}
+        >
           {loading ? (
-            <Grid item xs={12}>
+            <Box sx={{ gridColumn: '1 / -1' }}>
               <Typography align="center">Loading templates...</Typography>
-            </Grid>
+            </Box>
           ) : filteredTemplates.length === 0 ? (
-            <Grid item xs={12}>
+            <Box sx={{ gridColumn: '1 / -1' }}>
               <Card sx={{ p: 4, textAlign: 'center' }}>
                 <EmailIcon size={48} style={{ margin: '0 auto' }} />
                 <Typography variant="h6" sx={{ mt: 2 }}>
@@ -269,68 +278,66 @@ export default function EmailTemplatesPage(): React.JSX.Element {
                   Create Template
                 </Button>
               </Card>
-            </Grid>
+            </Box>
           ) : (
             filteredTemplates.map((template) => (
-              <Grid item xs={12} md={6} lg={4} key={template.id}>
-                <Card>
-                  <CardContent>
-                    <Stack spacing={2}>
-                      <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                        <Typography variant="h6" noWrap sx={{ flex: 1 }}>
-                          {template.name}
-                        </Typography>
-                        {template.is_default && (
-                          <Chip label="Default" color="primary" size="small" />
-                        )}
-                      </Stack>
-                      <Stack direction="row" spacing={1}>
-                        <Chip label={template.template_type} size="small" color="secondary" />
-                        <Chip label={`${template.variables.length} vars`} size="small" />
-                      </Stack>
-                      <Typography variant="body2" color="text.secondary" noWrap>
-                        Subject: {template.subject}
+              <Card key={template.id}>
+                <CardContent>
+                  <Stack spacing={2}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                      <Typography variant="h6" noWrap sx={{ flex: 1 }}>
+                        {template.name}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Created: {format(new Date(template.created_at), 'MMM d, yyyy')}
-                      </Typography>
+                      {template.is_default && (
+                        <Chip label="Default" color="primary" size="small" />
+                      )}
                     </Stack>
-                  </CardContent>
-                  <Divider />
-                  <CardActions>
-                    <Tooltip title="Preview">
-                      <IconButton
-                        size="small"
-                        onClick={() => {
-                          setSelectedTemplate(template);
-                          setPreviewDialogOpen(true);
-                        }}
-                      >
-                        <PreviewIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Edit">
-                      <IconButton size="small" onClick={() => openEditDialog(template)}>
-                        <EditIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                      <IconButton
-                        size="small"
-                        onClick={() => {
-                          setSelectedTemplate(template);
-                          setDeleteDialogOpen(true);
-                        }}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </CardActions>
-                </Card>
-              </Grid>
+                    <Stack direction="row" spacing={1}>
+                      <Chip label={template.template_type} size="small" color="secondary" />
+                      <Chip label={`${template.variables.length} vars`} size="small" />
+                    </Stack>
+                    <Typography variant="body2" color="text.secondary" noWrap>
+                      Subject: {template.subject}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Created: {format(new Date(template.created_at), 'MMM d, yyyy')}
+                    </Typography>
+                  </Stack>
+                </CardContent>
+                <Divider />
+                <CardActions>
+                  <Tooltip title="Preview">
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        setSelectedTemplate(template);
+                        setPreviewDialogOpen(true);
+                      }}
+                    >
+                      <PreviewIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Edit">
+                    <IconButton size="small" onClick={() => openEditDialog(template)}>
+                      <EditIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Delete">
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        setSelectedTemplate(template);
+                        setDeleteDialogOpen(true);
+                      }}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Tooltip>
+                </CardActions>
+              </Card>
             ))
           )}
-        </Grid>
+        </Box>
       </Stack>
 
       {/* Create Template Dialog */}
