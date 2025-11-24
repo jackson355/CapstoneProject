@@ -1,7 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { Box, Card, CardActionArea, CardContent, Grid, Stack, Typography } from '@mui/material';
+import { Box, Card, CardActionArea, CardContent, Stack, Typography } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import { EnvelopeSimple as SendIcon } from '@phosphor-icons/react/dist/ssr/EnvelopeSimple';
 import { ClockClockwise as HistoryIcon } from '@phosphor-icons/react/dist/ssr/ClockClockwise';
 import { CalendarBlank as ScheduleIcon } from '@phosphor-icons/react/dist/ssr/CalendarBlank';
@@ -89,7 +90,6 @@ export default function EmailsPage(): React.JSX.Element {
                 const Icon = item.icon;
                 return (
                   <Grid
-                    item
                     xs={12}
                     sm={6}
                     md={4}
