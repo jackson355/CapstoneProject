@@ -67,7 +67,7 @@ export default function Page(): React.JSX.Element {
         }
 
         // Fetch clients
-        const clientsResult = await authClient.getClients({ page: 0, per_page: 100 });
+        const clientsResult = await authClient.getClients(0, 100);
         if (clientsResult.data) {
           setClients(clientsResult.data.clients || []);
         }
