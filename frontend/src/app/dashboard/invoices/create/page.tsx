@@ -67,7 +67,7 @@ export default function Page(): React.JSX.Element {
         }
 
         // Fetch invoice templates
-        const templatesResult = await authClient.getTemplates({ page: 0, per_page: 100 });
+        const templatesResult = await authClient.getTemplates();
         if (templatesResult.data) {
           const invoiceTemplates = (templatesResult.data.templates || []).filter(
             (t: any) => t.template_type === 'invoice'

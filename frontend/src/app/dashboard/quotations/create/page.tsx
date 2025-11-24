@@ -73,7 +73,7 @@ export default function Page(): React.JSX.Element {
         }
 
         // Fetch quotation templates
-        const templatesResult = await authClient.getTemplates({ page: 0, per_page: 100 });
+        const templatesResult = await authClient.getTemplates();
         if (templatesResult.data) {
           const quotationTemplates = (templatesResult.data.templates || []).filter(
             (t: any) => t.template_type === 'quotation'
