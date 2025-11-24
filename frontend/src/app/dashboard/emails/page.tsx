@@ -77,30 +77,28 @@ export default function EmailsPage(): React.JSX.Element {
           }}
         >
           <Box sx={{ maxWidth: '1150px', width: '100%' }}>
-            <Grid
-              container
-              spacing={3}
+            <Box
               sx={{
-                display: 'flex',
-                justifyContent: 'center'
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: '1fr',
+                  sm: 'repeat(2, 1fr)',
+                  md: 'repeat(3, 1fr)'
+                },
+                gap: 3,
+                justifyItems: 'center'
               }}
             >
               {menuItems.map((menuItem) => {
                 const Icon = menuItem.icon;
                 return (
-                  <Grid
-                    item
-                    xs={12}
-                    sm={6}
-                    md={4}
+                  <Box
                     key={menuItem.title}
                     sx={{
-                      display: 'flex',
-                      justifyContent: 'center',
-                      maxWidth: { xs: '100%', sm: '50%', md: '360px' },
-                      flexBasis: { xs: '100%', sm: '50%', md: '360px' }
+                      width: '100%',
+                      maxWidth: '360px',
+                      minWidth: '300px'
                     }}
-                    component="div"
                   >
                   <Card
                     sx={{
@@ -148,10 +146,10 @@ export default function EmailsPage(): React.JSX.Element {
                     </Stack>
                   </CardActionArea>
                 </Card>
-                  </Grid>
+                  </Box>
                 );
               })}
-            </Grid>
+            </Box>
           </Box>
         </Box>
       </Stack>
