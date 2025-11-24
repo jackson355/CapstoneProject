@@ -61,13 +61,13 @@ export default function Page(): React.JSX.Element {
         }
 
         // Fetch ACCEPTED quotations only
-        const quotationsResult = await authClient.getQuotations(0, 100, { status: 'accepted' });
+        const quotationsResult = await authClient.getQuotations({ page: 0, per_page: 100, status: 'accepted' });
         if (quotationsResult.data) {
           setQuotations(quotationsResult.data.quotations || []);
         }
 
         // Fetch invoice templates
-        const templatesResult = await authClient.getTemplates(0, 100);
+        const templatesResult = await authClient.getTemplates({ page: 0, per_page: 100 });
         if (templatesResult.data) {
           const invoiceTemplates = (templatesResult.data.templates || []).filter(
             (t: any) => t.template_type === 'invoice'
