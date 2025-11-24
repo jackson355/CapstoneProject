@@ -187,9 +187,10 @@ describe('QuotationsTable - Critical Tests', () => {
 
       await waitFor(() => {
         expect(authClient.getQuotations).toHaveBeenCalledWith(
-          0,
-          10,
-          expect.any(Object)
+          expect.objectContaining({
+            page: 0,
+            per_page: 10
+          })
         );
       });
     });
