@@ -54,7 +54,7 @@ export default function SendEmailPage(): React.JSX.Element {
   const router = useRouter();
   const [loading, setLoading] = React.useState<boolean>(false);
   const [sending, setSending] = React.useState<boolean>(false);
-  const [message, setMessage] = React.useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [message, setMessage] = React.useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
 
   const [documentType, setDocumentType] = React.useState<'quotation' | 'invoice'>('quotation');
   const [quotations, setQuotations] = React.useState<Quotation[]>([]);
