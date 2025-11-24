@@ -7,11 +7,25 @@ from app.api import clients
 from app.api import templates
 from app.api import quotations
 from app.api import invoices
+from app.api import emails
+from app.api import company_settings
 from app.db.session import get_db
 from app.models import ActivityLog
 from sqlalchemy.orm import Session
+from app.background_jobs import start_background_jobs, shutdown_background_jobs
 
 app = FastAPI()
+
+# Startup and shutdown events for background jobs
+@app.on_event("startup")
+def on_startup():
+    """Start background jobs when the app starts"""
+    start_background_jobs()
+
+@app.on_event("shutdown")
+def on_shutdown():
+    """Shutdown background jobs when the app stops"""
+    shutdown_background_jobs()
 
 # Add CORS middleware
 app.add_middleware(
@@ -35,6 +49,8 @@ app.include_router(clients.router)
 app.include_router(templates.router)
 app.include_router(quotations.router)
 app.include_router(invoices.router)
+app.include_router(emails.router)
+app.include_router(company_settings.router, prefix="/company-settings", tags=["company-settings"])
 
 @app.get("/")
 def read_root():

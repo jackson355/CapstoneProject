@@ -8,6 +8,8 @@ import { InvoiceIcon } from '@phosphor-icons/react/dist/ssr/Invoice';
 import { UserIcon } from '@phosphor-icons/react/dist/ssr/User';
 import { UsersIcon } from '@phosphor-icons/react/dist/ssr/Users';
 import { XSquare } from '@phosphor-icons/react/dist/ssr/XSquare';
+import { EnvelopeSimpleIcon } from '@phosphor-icons/react/dist/ssr/EnvelopeSimple';
+import { BuildingsIcon } from '@phosphor-icons/react/dist/ssr/Buildings';
 
 export const navIcons = {
   'chart-pie': ChartPieIcon,
@@ -16,6 +18,8 @@ export const navIcons = {
   'plugs-connected': PlugsConnectedIcon,
   'receipt': ReceiptIcon,
   'file-invoice': InvoiceIcon,
+  'envelope-simple': EnvelopeSimpleIcon,
+  'buildings': BuildingsIcon,
   'x-square': XSquare,
   user: UserIcon,
   users: UsersIcon,

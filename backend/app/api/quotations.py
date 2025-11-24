@@ -12,6 +12,7 @@ from app.schemas import QuotationCreate, QuotationUpdate, QuotationOut, Quotatio
 from app.api.auth import get_current_user
 from app.services.file_storage import file_storage
 from app.services.quotation_filler import quotation_filler
+from app.services.email_scheduler import EmailScheduler
 
 router = APIRouter(prefix="/quotations", tags=["quotations"])
 
@@ -220,7 +221,13 @@ def update_quotation(
     if not quotation:
         raise HTTPException(status_code=404, detail="Quotation not found")
 
+    # Track old status for status change email trigger
+    old_status = quotation.status
+
     update_data = quotation_in.dict(exclude_unset=True)
+
+    # Extract send_notification_email flag (don't set it on quotation model)
+    send_notification_email = update_data.pop('send_notification_email', True)
 
     # Handle selected_contact conversion
     if 'selected_contact' in update_data and update_data['selected_contact']:
@@ -235,6 +242,21 @@ def update_quotation(
 
     db.commit()
     db.refresh(quotation)
+
+    # Trigger status change email if status changed AND user wants notification
+    new_status = quotation.status
+    if send_notification_email and old_status != new_status and new_status in ['accepted', 'rejected']:
+        try:
+            EmailScheduler.create_status_change_email(
+                db=db,
+                user_id=current_user.id,
+                quotation_id=quotation.id,
+                old_status=old_status,
+                new_status=new_status
+            )
+        except Exception as e:
+            # Log error but don't fail the update
+            print(f"Failed to create status change email: {str(e)}")
 
     # Log activity
     db.add(ActivityLog(

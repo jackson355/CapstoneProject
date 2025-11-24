@@ -89,6 +89,10 @@ class QuotationFillerService:
         - {{contact_name}} - Contact person name
         - {{contact_phone}} - Contact person phone
         - {{contact_email}} - Contact person email
+        - {{client_name}} - Contact person name (alias for contact_name)
+        - {{client_phone}} - Contact person phone (alias for contact_phone)
+        - {{client_email}} - Contact person email (alias for contact_email)
+        - {{client_contact_person}} - Contact person name (alias for contact_name)
         - {{my_company_name}} - User's company name
         - {{my_company_email}} - User's company email
         - {{my_company_phone}} - User's company phone
@@ -108,10 +112,20 @@ class QuotationFillerService:
         mapping['client_address'] = str(client_data.get('address') or '')
         mapping['client_postal_code'] = str(client_data.get('postal_code') or '')
 
-        # Contact information
-        mapping['contact_name'] = str(contact_data.get('name') or '')
-        mapping['contact_phone'] = str(contact_data.get('phone') or '')
-        mapping['contact_email'] = str(contact_data.get('email') or '')
+        # Contact information (with multiple placeholder options)
+        contact_name = str(contact_data.get('name') or '')
+        contact_phone = str(contact_data.get('phone') or '')
+        contact_email = str(contact_data.get('email') or '')
+
+        mapping['contact_name'] = contact_name
+        mapping['contact_phone'] = contact_phone
+        mapping['contact_email'] = contact_email
+
+        # Alias placeholders for contact (client_name, client_phone, client_email, client_contact_person)
+        mapping['client_name'] = contact_name
+        mapping['client_phone'] = contact_phone
+        mapping['client_email'] = contact_email
+        mapping['client_contact_person'] = contact_name  # Alias for contact person name
 
         # User's company information
         mapping['my_company_name'] = str(company_data.get('name') or '')

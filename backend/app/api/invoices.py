@@ -12,6 +12,7 @@ from app.schemas import InvoiceCreate, InvoiceUpdate, InvoiceOut, InvoiceListIte
 from app.api.auth import get_current_user
 from app.services.file_storage import file_storage
 from app.services.quotation_filler import quotation_filler  # Reuse the same filler service
+from app.services.email_scheduler import EmailScheduler
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
 
@@ -108,14 +109,6 @@ def create_invoice(
         raise HTTPException(
             status_code=400,
             detail=f"Cannot create invoice from quotation with status '{quotation.status}'. Only 'accepted' quotations can be converted to invoices."
-        )
-
-    # Check if invoice already exists for this quotation
-    existing_invoice = db.query(Invoice).filter(Invoice.quotation_id == quotation.id).first()
-    if existing_invoice:
-        raise HTTPException(
-            status_code=400,
-            detail=f"An invoice already exists for this quotation (Invoice: {existing_invoice.invoice_number})"
         )
 
     # Get client from quotation
@@ -266,7 +259,13 @@ def update_invoice(
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
 
+    # Track old status for status change email trigger
+    old_status = invoice.status
+
     update_data = invoice_in.dict(exclude_unset=True)
+
+    # Extract send_notification_email flag (don't set it on invoice model)
+    send_notification_email = update_data.pop('send_notification_email', True)
 
     # Handle my_company_info conversion
     if 'my_company_info' in update_data and update_data['my_company_info']:
@@ -277,6 +276,21 @@ def update_invoice(
 
     db.commit()
     db.refresh(invoice)
+
+    # Trigger status change email if status changed to 'paid' AND user wants notification
+    new_status = invoice.status
+    if send_notification_email and old_status != new_status and new_status == 'paid':
+        try:
+            EmailScheduler.create_status_change_email(
+                db=db,
+                user_id=current_user.id,
+                invoice_id=invoice.id,
+                old_status=old_status,
+                new_status=new_status
+            )
+        except Exception as e:
+            # Log error but don't fail the update
+            print(f"Failed to create status change email: {str(e)}")
 
     # Log activity
     db.add(ActivityLog(

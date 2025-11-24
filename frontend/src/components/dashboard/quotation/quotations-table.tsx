@@ -20,6 +20,8 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import WarningIcon from '@mui/icons-material/Warning';
+import EmailIcon from '@mui/icons-material/Email';
+import AlertTitle from '@mui/material/AlertTitle';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -29,6 +31,8 @@ import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
 import Alert from '@mui/material/Alert';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
@@ -84,11 +88,23 @@ export function QuotationsTable(): React.JSX.Element {
   const [editStatus, setEditStatus] = React.useState<string>('');
   const [editDueDate, setEditDueDate] = React.useState<string>('');
 
+  // Email notification confirmation dialog state
+  const [emailConfirmDialogOpen, setEmailConfirmDialogOpen] = React.useState<boolean>(false);
+  const [pendingUpdate, setPendingUpdate] = React.useState<any>(null);
+  const [oldStatus, setOldStatus] = React.useState<string>('');
+
   // Delete dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState<boolean>(false);
 
   // Usage error dialog state
   const [usageErrorDialog, setUsageErrorDialog] = React.useState<{ open: boolean; data: any }>({ open: false, data: null });
+
+  // Send email dialog state
+  const [sendEmailDialogOpen, setSendEmailDialogOpen] = React.useState<boolean>(false);
+  const [emailSubject, setEmailSubject] = React.useState<string>('');
+  const [emailBody, setEmailBody] = React.useState<string>('');
+  const [attachDocument, setAttachDocument] = React.useState<boolean>(true);
+  const [sendingEmail, setSendingEmail] = React.useState<boolean>(false);
 
   // Debounce search
   const debouncedSearch = useDebounce(search, 300);
@@ -96,7 +112,9 @@ export function QuotationsTable(): React.JSX.Element {
   const fetchQuotations = React.useCallback(async () => {
     setLoading(true);
     try {
-      const result = await authClient.getQuotations(page, rowsPerPage, {
+      const result = await authClient.getQuotations({
+        page,
+        per_page: rowsPerPage,
         search: debouncedSearch,
         status: status || undefined,
       });
@@ -159,6 +177,7 @@ export function QuotationsTable(): React.JSX.Element {
     if (selectedQuotation) {
       setEditingQuotation(selectedQuotation);
       setEditStatus(selectedQuotation.status);
+      setOldStatus(selectedQuotation.status); // Store old status
       setEditDueDate(selectedQuotation.due_date ? new Date(selectedQuotation.due_date).toISOString().split('T')[0] : '');
       setEditDialogOpen(true);
     }
@@ -171,8 +190,6 @@ export function QuotationsTable(): React.JSX.Element {
       return;
     }
 
-    console.log('Saving details:', { status: editStatus, due_date: editDueDate });
-
     const updates: any = {
       status: editStatus,
     };
@@ -183,22 +200,46 @@ export function QuotationsTable(): React.JSX.Element {
       updates.due_date = null;
     }
 
-    console.log('Sending update:', updates);
+    // Check if status changed to accepted/rejected
+    const statusChanged = editStatus !== oldStatus;
+    const shouldAskForNotification = statusChanged && ['accepted', 'rejected'].includes(editStatus);
 
-    const result = await authClient.updateQuotation(editingQuotation.id, updates);
+    if (shouldAskForNotification) {
+      // Show confirmation dialog instead of saving directly
+      setPendingUpdate(updates);
+      setEmailConfirmDialogOpen(true);
+    } else {
+      // Save directly without email notification
+      await performUpdate({ ...updates, send_notification_email: false });
+    }
+  };
 
-    console.log('Update result:', result);
+  const performUpdate = async (data: any) => {
+    if (!editingQuotation) return;
+
+    const result = await authClient.updateQuotation(editingQuotation.id, data);
 
     if (!result.error) {
       setEditDialogOpen(false);
+      setEmailConfirmDialogOpen(false);
       setEditingQuotation(null);
       setEditStatus('');
       setEditDueDate('');
+      setOldStatus('');
+      setPendingUpdate(null);
       await fetchQuotations();
     } else {
       console.error('Update error:', result.error);
       alert(result.error);
     }
+  };
+
+  const handleSendEmail = () => {
+    performUpdate({ ...pendingUpdate, send_notification_email: true });
+  };
+
+  const handleSkipEmail = () => {
+    performUpdate({ ...pendingUpdate, send_notification_email: false });
   };
 
   const handleCancelEdit = () => {
@@ -241,6 +282,47 @@ export function QuotationsTable(): React.JSX.Element {
   const handleDeleteCancel = () => {
     setDeleteDialogOpen(false);
     setSelectedQuotation(null);
+  };
+
+  const handleSendEmailClick = () => {
+    if (selectedQuotation) {
+      setEmailSubject(`Quotation ${selectedQuotation.quotation_number}`);
+      setEmailBody(`Dear ${selectedQuotation.selected_contact.name},\n\nPlease find attached the quotation ${selectedQuotation.quotation_number}.\n\nBest regards`);
+      setSendEmailDialogOpen(true);
+    }
+    handleMenuClose();
+  };
+
+  const handleSendEmailConfirm = async () => {
+    if (!selectedQuotation) return;
+
+    try {
+      setSendingEmail(true);
+      await authClient.sendEmail({
+        recipient_email: selectedQuotation.selected_contact.email,
+        subject: emailSubject,
+        body: emailBody.replace(/\n/g, '<br>'),
+        quotation_id: selectedQuotation.id,
+        attach_document: attachDocument,
+      });
+      alert('Email sent successfully!');
+      setSendEmailDialogOpen(false);
+      setEmailSubject('');
+      setEmailBody('');
+      setAttachDocument(true);
+    } catch (error) {
+      console.error('Failed to send email:', error);
+      alert('Failed to send email. Please check your email settings.');
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  const handleSendEmailCancel = () => {
+    setSendEmailDialogOpen(false);
+    setEmailSubject('');
+    setEmailBody('');
+    setAttachDocument(true);
   };
 
   const getStatusColor = (status: string) => {
@@ -480,6 +562,60 @@ export function QuotationsTable(): React.JSX.Element {
         </DialogActions>
       </Dialog>
 
+      {/* Email Notification Confirmation Dialog */}
+      <Dialog
+        open={emailConfirmDialogOpen}
+        onClose={() => setEmailConfirmDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogContent sx={{ pt: 3 }}>
+          {/* Icon */}
+          <Box sx={{ textAlign: 'center', mb: 2 }}>
+            <EmailIcon sx={{ fontSize: 48, color: 'primary.main' }} />
+          </Box>
+
+          {/* Title */}
+          <Typography variant="h6" align="center" gutterBottom>
+            Send Notification Email?
+          </Typography>
+
+          {/* Status Change Info */}
+          <Alert severity="info" sx={{ mb: 2 }}>
+            <AlertTitle>Status Changed</AlertTitle>
+            <strong>{oldStatus}</strong> → <strong>{editStatus}</strong>
+          </Alert>
+
+          {/* Recipient Info */}
+          {editingQuotation && (
+            <Box sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 1, mb: 2 }}>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                <strong>Recipient:</strong>
+              </Typography>
+              <Typography variant="body1">
+                {editingQuotation.selected_contact.name}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {editingQuotation.selected_contact.email}
+              </Typography>
+            </Box>
+          )}
+
+          <Typography variant="body2" color="text.secondary" align="center">
+            Would you like to notify the client about this status change?
+          </Typography>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button onClick={handleSendEmail} variant="outlined" fullWidth>
+            Send Notification
+          </Button>
+          <Button onClick={handleSkipEmail} variant="contained" fullWidth>
+            Skip Email
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Delete Confirmation Dialog */}
       <Dialog
         open={deleteDialogOpen}
@@ -575,6 +711,57 @@ export function QuotationsTable(): React.JSX.Element {
         <DialogActions>
           <Button onClick={() => setUsageErrorDialog({ open: false, data: null })} variant="contained">
             Got it
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Send Email Dialog */}
+      <Dialog open={sendEmailDialogOpen} onClose={handleSendEmailCancel} maxWidth="md" fullWidth>
+        <DialogTitle>Send Email</DialogTitle>
+        <DialogContent>
+          <Stack spacing={3} sx={{ mt: 2 }}>
+            <Alert severity="info">
+              Sending to: {selectedQuotation?.selected_contact.email} ({selectedQuotation?.selected_contact.name})
+            </Alert>
+
+            <TextField
+              fullWidth
+              label="Subject"
+              value={emailSubject}
+              onChange={(e) => setEmailSubject(e.target.value)}
+            />
+
+            <TextField
+              fullWidth
+              multiline
+              rows={8}
+              label="Email Body"
+              value={emailBody}
+              onChange={(e) => setEmailBody(e.target.value)}
+              helperText="Write your email message here"
+            />
+
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={attachDocument}
+                  onChange={(e) => setAttachDocument(e.target.checked)}
+                />
+              }
+              label="Attach Quotation Document"
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleSendEmailCancel} disabled={sendingEmail}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSendEmailConfirm}
+            variant="contained"
+            disabled={sendingEmail || !emailSubject || !emailBody}
+          >
+            {sendingEmail ? 'Sending...' : 'Send Email'}
           </Button>
         </DialogActions>
       </Dialog>

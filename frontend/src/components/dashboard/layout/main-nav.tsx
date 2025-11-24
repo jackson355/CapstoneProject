@@ -16,6 +16,7 @@ import { useNavigation } from '@/contexts/navigation-context';
 
 import { MobileNav } from './mobile-nav';
 import { UserPopover } from './user-popover';
+import { NotificationsPopover } from './notifications-popover';
 
 // main-nav.tsx – function MainNav
 export function MainNav(): React.JSX.Element {
@@ -76,13 +77,7 @@ export function MainNav(): React.JSX.Element {
                 <UsersIcon />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Notifications">
-              <Badge badgeContent={4} color="success" variant="dot">
-                <IconButton aria-label="Notifications">
-                  <BellIcon />
-                </IconButton>
-              </Badge>
-            </Tooltip>
+            <NotificationsPopover />
             <Avatar
               onClick={userPopover.handleOpen}
               ref={userPopover.anchorRef}

@@ -52,6 +52,14 @@ export default function Page(): React.JSX.Element {
     const fetchData = async () => {
       setLoading(true);
       try {
+        // Fetch company settings to get default company info
+        const companyResult = await authClient.getCompanySettings();
+        if (companyResult.data) {
+          setCompanyName(companyResult.data.company_name || '');
+          setCompanyEmail(companyResult.data.company_email || '');
+          setCompanyPhone(companyResult.data.company_phone || '');
+        }
+
         // Fetch ACCEPTED quotations only
         const quotationsResult = await authClient.getQuotations(0, 100, { status: 'accepted' });
         if (quotationsResult.data) {
@@ -124,6 +132,21 @@ export default function Page(): React.JSX.Element {
       return;
     }
 
+    // Validate due date is required and after today
+    if (!dueDate) {
+      setError('Due date is required for invoices');
+      return;
+    }
+
+    const selectedDate = new Date(dueDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (selectedDate <= today) {
+      setError('Due date must be after today');
+      return;
+    }
+
     setSubmitting(true);
     setError('');
 
@@ -148,10 +171,8 @@ export default function Page(): React.JSX.Element {
         }
       }
 
-      // Add due date if provided
-      if (dueDate) {
-        params.due_date = new Date(dueDate).toISOString();
-      }
+      // Add due date (now required)
+      params.due_date = new Date(dueDate).toISOString();
 
       const result = await authClient.createInvoice(params);
 
@@ -319,12 +340,14 @@ export default function Page(): React.JSX.Element {
                 {/* Due Date Field */}
                 <TextField
                   fullWidth
+                  required
                   label="Due Date"
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
                   InputLabelProps={{ shrink: true }}
-                  helperText="Optional: When payment is due"
+                  helperText="When payment is due (must be after today)"
+                  inputProps={{ min: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0] }}
                 />
 
                 {/* Action Buttons */}
@@ -339,7 +362,7 @@ export default function Page(): React.JSX.Element {
                   <Button
                     type="submit"
                     variant="contained"
-                    disabled={submitting || !selectedQuotationId || !selectedTemplateId || quotations.length === 0}
+                    disabled={submitting || !selectedQuotationId || !selectedTemplateId || !dueDate || quotations.length === 0}
                   >
                     {submitting ? 'Creating...' : 'Create & Edit Invoice'}
                   </Button>

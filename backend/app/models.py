@@ -178,3 +178,243 @@ class Invoice(Base):
     __table_args__ = (
         {'extend_existing': True}
     )
+
+class EmailTemplate(Base):
+    __tablename__ = 'email_templates'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    subject = Column(String(500), nullable=False)
+    body = Column(Text, nullable=False)  # HTML email body
+    template_type = Column(String(50), nullable=False, index=True)  # 'quotation' or 'invoice' or 'general'
+    variables = Column(JSON, nullable=True)  # Available variables for template
+    is_default = Column(Boolean, default=False)  # Is this the default template
+
+    created_by = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    # Relationships
+    creator = relationship('User', foreign_keys=[created_by])
+
+    __table_args__ = (
+        {'extend_existing': True}
+    )
+
+class EmailHistory(Base):
+    __tablename__ = 'email_history'
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Email details
+    recipient_email = Column(String(255), nullable=False, index=True)
+    recipient_name = Column(String(255), nullable=True)
+    subject = Column(String(500), nullable=False)
+    body = Column(Text, nullable=False)  # HTML email body
+
+    # Related documents (with SET NULL on delete)
+    quotation_id = Column(Integer, ForeignKey('quotations.id', ondelete='SET NULL'), nullable=True, index=True)
+    invoice_id = Column(Integer, ForeignKey('invoices.id', ondelete='SET NULL'), nullable=True, index=True)
+
+    # Document snapshot (preserved even if document deleted)
+    document_number = Column(String(100), nullable=True, index=True)  # Q-2025-0001 or INV-2025-0001
+    document_type = Column(String(20), nullable=True)  # 'quotation' or 'invoice'
+
+    # Email template used
+    email_template_id = Column(Integer, ForeignKey('email_templates.id'), nullable=True)
+
+    # Status tracking
+    status = Column(String(50), default='sent', index=True)  # 'sent', 'failed', 'pending'
+    error_message = Column(Text, nullable=True)  # Error message if failed
+
+    # Attachments
+    attachments = Column(JSON, nullable=True)  # List of attached file paths
+
+    # Metadata
+    sent_by = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
+    sent_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+
+    # Relationships
+    quotation = relationship('Quotation', foreign_keys=[quotation_id])
+    invoice = relationship('Invoice', foreign_keys=[invoice_id])
+    email_template = relationship('EmailTemplate', foreign_keys=[email_template_id])
+    sender = relationship('User', foreign_keys=[sent_by])
+
+    __table_args__ = (
+        {'extend_existing': True}
+    )
+
+class ScheduledEmail(Base):
+    __tablename__ = 'scheduled_emails'
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Email details
+    recipient_email = Column(String(255), nullable=False, index=True)
+    recipient_name = Column(String(255), nullable=True)
+    subject = Column(String(500), nullable=False)
+    body = Column(Text, nullable=False)  # HTML email body
+
+    # Related documents (with SET NULL on delete)
+    quotation_id = Column(Integer, ForeignKey('quotations.id', ondelete='SET NULL'), nullable=True, index=True)
+    invoice_id = Column(Integer, ForeignKey('invoices.id', ondelete='SET NULL'), nullable=True, index=True)
+
+    # Document snapshot (preserved even if document deleted)
+    document_number = Column(String(100), nullable=True, index=True)  # Q-2025-0001 or INV-2025-0001
+    document_type = Column(String(20), nullable=True)  # 'quotation' or 'invoice'
+
+    # Email template used
+    email_template_id = Column(Integer, ForeignKey('email_templates.id'), nullable=True)
+
+    # Scheduling details
+    scheduled_time = Column(DateTime(timezone=True), nullable=False, index=True)  # When to send
+    is_recurring = Column(Boolean, default=False)  # Is this a recurring email
+    recurrence_pattern = Column(JSON, nullable=True)  # {'frequency': 'daily/weekly/monthly', 'interval': 1, 'end_date': '2025-12-31'}
+
+    # Trigger type
+    trigger_type = Column(String(50), nullable=True, index=True)  # 'manual', 'deadline', 'status_change', 'reminder'
+    trigger_config = Column(JSON, nullable=True)  # Additional trigger configuration
+
+    # Status tracking
+    status = Column(String(50), default='pending', index=True)  # 'pending', 'sent', 'cancelled', 'failed'
+    last_sent_at = Column(DateTime(timezone=True), nullable=True)  # For recurring emails
+    next_send_at = Column(DateTime(timezone=True), nullable=True)  # For recurring emails
+    error_message = Column(Text, nullable=True)
+
+    # Attachments
+    attachments = Column(JSON, nullable=True)  # List of file paths to attach
+
+    # Metadata
+    created_by = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    # Relationships
+    quotation = relationship('Quotation', foreign_keys=[quotation_id])
+    invoice = relationship('Invoice', foreign_keys=[invoice_id])
+    email_template = relationship('EmailTemplate', foreign_keys=[email_template_id])
+    creator = relationship('User', foreign_keys=[created_by])
+
+    __table_args__ = (
+        {'extend_existing': True}
+    )
+
+class Notification(Base):
+    __tablename__ = 'notifications'
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Notification content
+    title = Column(String(200), nullable=False)
+    message = Column(String(500), nullable=False)
+    notification_type = Column(String(50), nullable=False, index=True)  # 'email_sent', 'email_failed', 'email_scheduled'
+
+    # Related entities
+    related_type = Column(String(50), nullable=True)  # 'email_history', 'scheduled_email', 'quotation', 'invoice'
+    related_id = Column(Integer, nullable=True)
+
+    # Additional data
+    notification_metadata = Column(JSON, nullable=True)
+
+    # User assignment
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
+
+    # Status
+    is_read = Column(Boolean, default=False, index=True)
+    read_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Metadata
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+
+    # Relationships
+    user = relationship('User', foreign_keys=[user_id])
+
+    __table_args__ = (
+        {'extend_existing': True}
+    )
+
+class EmailSettings(Base):
+    __tablename__ = 'email_settings'
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Provider type: 'smtp' or 'sendgrid'
+    provider = Column(String(50), nullable=False, default='smtp')
+
+    # SMTP Configuration (used when provider='smtp')
+    smtp_server = Column(String(255), nullable=True)
+    smtp_port = Column(Integer, nullable=True)
+    smtp_username = Column(String(255), nullable=True)
+    smtp_password = Column(String(255), nullable=True)  # Should be encrypted
+    use_tls = Column(Boolean, default=True)
+    use_ssl = Column(Boolean, default=False)
+
+    # SendGrid Configuration (used when provider='sendgrid')
+    sendgrid_api_key = Column(String(500), nullable=True)  # Should be encrypted
+
+    # Email defaults (used for both providers)
+    from_email = Column(String(255), nullable=False)
+    from_name = Column(String(255), nullable=True)
+    reply_to = Column(String(255), nullable=True)
+
+    # Signature
+    email_signature = Column(Text, nullable=True)  # HTML signature
+
+    # User/Organization
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=True, index=True)  # NULL = organization-wide settings
+    is_active = Column(Boolean, default=True)
+
+    # Metadata
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    # Relationships
+    user = relationship('User', foreign_keys=[user_id])
+
+    __table_args__ = (
+        {'extend_existing': True}
+    )
+
+class AutomationTemplate(Base):
+    __tablename__ = 'automation_templates'
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Trigger configuration
+    trigger_type = Column(String(50), nullable=False, index=True)  # 'status_change' or 'deadline'
+    trigger_event = Column(String(100), nullable=False, unique=True, index=True)  # e.g., 'quotation_accepted', 'quotation_deadline'
+
+    # Email content
+    subject = Column(String(500), nullable=False)  # With template variables like {{quotation_number}}
+    body = Column(Text, nullable=False)  # HTML email body with template variables
+
+    # Status
+    is_enabled = Column(Boolean, default=True, nullable=False)
+
+    # Metadata
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    __table_args__ = (
+        {'extend_existing': True}
+    )
+
+class CompanySettings(Base):
+    __tablename__ = 'company_settings'
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Company information (used globally for all quotations/invoices)
+    company_name = Column(String(200), nullable=True)
+    company_email = Column(String(100), nullable=True)
+    company_phone = Column(String(50), nullable=True)
+    company_address = Column(String(500), nullable=True)
+    company_website = Column(String(200), nullable=True)
+
+    # Metadata
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    __table_args__ = (
+        {'extend_existing': True}
+    )

@@ -38,6 +38,7 @@ export function MobileNav({ onClose, open }: MobileNavProps): React.JSX.Element 
     return navItems.filter((item) => {
       if (item.key === 'users') return isPrivileged;
       if (item.key === 'clients') return isPrivileged;
+      if (item.key === 'company-settings') return isPrivileged;
       return true;
     });
   }, [user]);

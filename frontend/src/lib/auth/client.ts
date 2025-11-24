@@ -797,17 +797,19 @@ class AuthClient {
 
   // Quotation API methods
 
-  async getQuotations(page = 0, perPage = 10, filters?: { search?: string; status?: string; client_id?: number }): Promise<{ error?: string; data?: any }> {
+  async getQuotations(params: { page?: number; per_page?: number; search?: string; status?: string; client_id?: number } = {}): Promise<{ error?: string; data?: any }> {
     const token = localStorage.getItem('access_token');
     if (!token) return { error: 'Not authenticated' };
 
     try {
-      const params = new URLSearchParams({ page: String(page), per_page: String(perPage) });
-      if (filters?.search) params.set('search', filters.search);
-      if (filters?.status) params.set('status', filters.status);
-      if (filters?.client_id) params.set('client_id', String(filters.client_id));
+      const queryParams = new URLSearchParams();
+      if (params.page !== undefined) queryParams.set('page', String(params.page));
+      if (params.per_page !== undefined) queryParams.set('per_page', String(params.per_page));
+      if (params.search) queryParams.set('search', params.search);
+      if (params.status) queryParams.set('status', params.status);
+      if (params.client_id) queryParams.set('client_id', String(params.client_id));
 
-      const res = await fetch(`${config.api.baseUrl}/quotations/?${params.toString()}`, {
+      const res = await fetch(`${config.api.baseUrl}/quotations/?${queryParams.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -1052,18 +1054,20 @@ class AuthClient {
 
   // Invoice API methods
 
-  async getInvoices(page = 0, perPage = 10, filters?: { search?: string; status?: string; client_id?: number; quotation_id?: number }): Promise<{ error?: string; data?: any }> {
+  async getInvoices(params: { page?: number; per_page?: number; search?: string; status?: string; client_id?: number; quotation_id?: number } = {}): Promise<{ error?: string; data?: any }> {
     const token = localStorage.getItem('access_token');
     if (!token) return { error: 'Not authenticated' };
 
     try {
-      const params = new URLSearchParams({ page: String(page), per_page: String(perPage) });
-      if (filters?.search) params.set('search', filters.search);
-      if (filters?.status) params.set('status', filters.status);
-      if (filters?.client_id) params.set('client_id', String(filters.client_id));
-      if (filters?.quotation_id) params.set('quotation_id', String(filters.quotation_id));
+      const queryParams = new URLSearchParams();
+      if (params.page !== undefined) queryParams.set('page', String(params.page));
+      if (params.per_page !== undefined) queryParams.set('per_page', String(params.per_page));
+      if (params.search) queryParams.set('search', params.search);
+      if (params.status) queryParams.set('status', params.status);
+      if (params.client_id) queryParams.set('client_id', String(params.client_id));
+      if (params.quotation_id) queryParams.set('quotation_id', String(params.quotation_id));
 
-      const res = await fetch(`${config.api.baseUrl}/invoices/?${params.toString()}`, {
+      const res = await fetch(`${config.api.baseUrl}/invoices/?${queryParams.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -1240,6 +1244,699 @@ class AuthClient {
 
       if (!res.ok) {
         let message = 'Failed to check placeholders';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  // ==================== EMAIL API METHODS ====================
+
+  // Email Templates
+  async getEmailTemplates(params: { template_type?: string } = {}): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const queryParams = new URLSearchParams();
+      if (params.template_type) queryParams.set('template_type', params.template_type);
+
+      const res = await fetch(`${config.api.baseUrl}/emails/templates?${queryParams.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to fetch email templates';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async getEmailTemplateById(templateId: number): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/emails/templates/${templateId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to fetch email template';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async createEmailTemplate(params: {
+    name: string;
+    subject: string;
+    body: string;
+    template_type: string;
+    variables?: string[];
+    is_default?: boolean;
+  }): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/emails/templates`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(params),
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to create email template';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async updateEmailTemplate(templateId: number, params: any): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/emails/templates/${templateId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(params),
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to update email template';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async deleteEmailTemplate(templateId: number): Promise<{ error?: string }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/emails/templates/${templateId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to delete email template';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      return {};
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  // Send Email
+  async sendEmail(params: {
+    recipient_email: string;
+    recipient_name?: string;
+    subject: string;
+    body: string;
+    quotation_id?: number;
+    invoice_id?: number;
+    email_template_id?: number;
+    attach_document?: boolean;
+  }): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/emails/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(params),
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to send email';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  // Email History
+  async getEmailHistory(params: { page?: number; per_page?: number; status?: string; quotation_id?: number; invoice_id?: number; search?: string; document_type?: string } = {}): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const queryParams = new URLSearchParams();
+      if (params.page !== undefined) queryParams.set('page', String(params.page));
+      if (params.per_page !== undefined) queryParams.set('per_page', String(params.per_page));
+      if (params.status) queryParams.set('status', params.status);
+      if (params.quotation_id) queryParams.set('quotation_id', String(params.quotation_id));
+      if (params.invoice_id) queryParams.set('invoice_id', String(params.invoice_id));
+      if (params.search) queryParams.set('search', params.search);
+      if (params.document_type) queryParams.set('document_type', params.document_type);
+
+      const res = await fetch(`${config.api.baseUrl}/emails/history?${queryParams.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to fetch email history';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async getEmailHistoryById(emailId: number): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/emails/history/${emailId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to fetch email';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  // Scheduled Emails
+  async getScheduledEmails(params: { page?: number; per_page?: number; status?: string; trigger_type?: string } = {}): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const queryParams = new URLSearchParams();
+      if (params.page !== undefined) queryParams.set('page', String(params.page));
+      if (params.per_page !== undefined) queryParams.set('per_page', String(params.per_page));
+      if (params.status) queryParams.set('status', params.status);
+      if (params.trigger_type) queryParams.set('trigger_type', params.trigger_type);
+
+      const res = await fetch(`${config.api.baseUrl}/emails/scheduled?${queryParams.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to fetch scheduled emails';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async createScheduledEmail(params: any): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/emails/scheduled`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(params),
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to schedule email';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async cancelScheduledEmail(scheduledEmailId: number): Promise<{ error?: string }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/emails/scheduled/${scheduledEmailId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to cancel scheduled email';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      return {};
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  // Notifications
+  async getNotifications(params: { page?: number; per_page?: number; is_read?: boolean } = {}): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const queryParams = new URLSearchParams();
+      if (params.page !== undefined) queryParams.set('page', String(params.page));
+      if (params.per_page !== undefined) queryParams.set('per_page', String(params.per_page));
+      if (params.is_read !== undefined) queryParams.set('is_read', String(params.is_read));
+
+      const res = await fetch(`${config.api.baseUrl}/emails/notifications?${queryParams.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to fetch notifications';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async getUnreadNotificationsCount(): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/emails/notifications/unread-count`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to fetch unread count';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async markNotificationAsRead(notificationId: number): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/emails/notifications/${notificationId}/read`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to mark notification as read';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async markAllNotificationsAsRead(): Promise<{ error?: string }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/emails/notifications/mark-all-read`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to mark all notifications as read';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      return {};
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async deleteNotification(notificationId: number): Promise<{ error?: string }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/emails/notifications/${notificationId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to delete notification';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      return {};
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  // Email Automation Templates
+  async getAutomationTemplates(): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/emails/automation-templates`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to fetch automation templates';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async saveAutomationTemplates(templates: any[]): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/emails/automation-templates`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ templates }),
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to save automation templates';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  // Email Settings
+  async getEmailSettings(): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/emails/settings`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to fetch email settings';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async createEmailSettings(params: any): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/emails/settings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(params),
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to create email settings';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async updateEmailSettings(settingsId: number, params: any): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/emails/settings/${settingsId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(params),
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to update email settings';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  // Company Settings
+  async getCompanySettings(): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/company-settings/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to fetch company settings';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async updateCompanySettings(params: any): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/company-settings/`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(params),
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to update company settings';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async getDefaultEmailTemplate(template_type: string): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/emails/templates/${template_type}/default`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to fetch default template';
         try {
           const err = await res.json();
           message = err.detail || message;

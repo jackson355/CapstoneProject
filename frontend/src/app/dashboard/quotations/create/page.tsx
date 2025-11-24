@@ -58,6 +58,14 @@ export default function Page(): React.JSX.Element {
     const fetchData = async () => {
       setLoading(true);
       try {
+        // Fetch company settings to get default company info
+        const companyResult = await authClient.getCompanySettings();
+        if (companyResult.data) {
+          setCompanyName(companyResult.data.company_name || '');
+          setCompanyEmail(companyResult.data.company_email || '');
+          setCompanyPhone(companyResult.data.company_phone || '');
+        }
+
         // Fetch clients
         const clientsResult = await authClient.getClients(0, 100);
         if (clientsResult.data) {
@@ -330,7 +338,7 @@ export default function Page(): React.JSX.Element {
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
                   InputLabelProps={{ shrink: true }}
-                  helperText="Optional: When payment is due"
+                  helperText="Optional: When quotation is due"
                 />
 
                 {/* Action Buttons */}
@@ -381,6 +389,11 @@ export default function Page(): React.JSX.Element {
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   {'{{'}<strong>contact_name</strong>{'}},'} {'{{'}<strong>contact_phone</strong>{'}},'} {'{{'}<strong>contact_email</strong>{'}}'}
+                  <br />
+                  {'{{'}<strong>client_name</strong>{'}},'} {'{{'}<strong>client_phone</strong>{'}},'} {'{{'}<strong>client_email</strong>{'}}'}
+                  <Typography component="span" variant="caption" sx={{ fontStyle: 'italic', ml: 0.5 }}>
+                    (aliases for contact info)
+                  </Typography>
                 </Typography>
               </Stack>
 

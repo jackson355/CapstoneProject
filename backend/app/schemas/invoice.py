@@ -32,6 +32,7 @@ class InvoiceUpdate(BaseModel):
     my_company_info: Optional[CompanyInfo] = None
     due_date: Optional[datetime] = None
     unfilled_placeholders: Optional[List[str]] = None
+    send_notification_email: Optional[bool] = True  # Whether to send status change email
 
 class InvoiceOut(BaseModel):
     id: int
@@ -53,11 +54,18 @@ class InvoiceOut(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class ClientInfo(BaseModel):
+    id: int
+    company_name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
 class InvoiceListItem(BaseModel):
     id: int
     invoice_number: str
     quotation_id: int
     client_id: int
+    client: ClientInfo
     selected_contact: ContactInfo
     template_id: int
     status: str

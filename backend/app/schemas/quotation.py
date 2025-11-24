@@ -35,6 +35,7 @@ class QuotationUpdate(BaseModel):
     my_company_info: Optional[CompanyInfo] = None
     due_date: Optional[datetime] = None
     unfilled_placeholders: Optional[List[str]] = None
+    send_notification_email: Optional[bool] = True  # Whether to send status change email
 
 class QuotationOut(BaseModel):
     id: int
@@ -55,10 +56,17 @@ class QuotationOut(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class ClientInfo(BaseModel):
+    id: int
+    company_name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
 class QuotationListItem(BaseModel):
     id: int
     quotation_number: str
     client_id: int
+    client: ClientInfo
     selected_contact: ContactInfo
     template_id: int
     status: str

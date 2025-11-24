@@ -128,10 +128,10 @@ export function AccountDetailsForm(): React.JSX.Element {
             >
               <FormControl fullWidth required>
                 <InputLabel>Email address</InputLabel>
-                <OutlinedInput 
-                  defaultValue={user.email || ''} 
-                  label="Email address" 
-                  name="email" 
+                <OutlinedInput
+                  defaultValue={user.email || ''}
+                  label="Email address"
+                  name="email"
                   type="email"
                 />
               </FormControl>

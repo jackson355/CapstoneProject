@@ -8,6 +8,8 @@ export const navItems = [
   { key: 'templates', title: 'Template Management', href: paths.dashboard.templates, icon: 'file-text' },
   { key: 'quotations', title: 'Quotation Management', href: paths.dashboard.quotations, icon: 'receipt' },
   { key: 'invoices', title: 'Invoice Management', href: paths.dashboard.invoices, icon: 'file-invoice' },
+  { key: 'emails', title: 'Email Management', href: paths.dashboard.emails, icon: 'envelope-simple' },
+  { key: 'company-settings', title: 'Company Settings', href: paths.dashboard.companySettings, icon: 'buildings' },
   { key: 'settings', title: 'Settings', href: paths.dashboard.settings, icon: 'gear-six' },
   { key: 'account', title: 'Account', href: paths.dashboard.account, icon: 'user' },
 ] satisfies NavItemConfig[];

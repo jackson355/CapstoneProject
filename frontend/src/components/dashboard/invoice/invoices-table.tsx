@@ -20,6 +20,8 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import WarningIcon from '@mui/icons-material/Warning';
+import EmailIcon from '@mui/icons-material/Email';
+import AlertTitle from '@mui/material/AlertTitle';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -29,6 +31,8 @@ import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
 import Alert from '@mui/material/Alert';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
@@ -86,11 +90,23 @@ export function InvoicesTable(): React.JSX.Element {
   const [editStatus, setEditStatus] = React.useState<string>('');
   const [editDueDate, setEditDueDate] = React.useState<string>('');
 
+  // Email notification confirmation dialog state
+  const [emailConfirmDialogOpen, setEmailConfirmDialogOpen] = React.useState<boolean>(false);
+  const [pendingUpdate, setPendingUpdate] = React.useState<any>(null);
+  const [oldStatus, setOldStatus] = React.useState<string>('');
+
   // Delete dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState<boolean>(false);
 
   // Usage error dialog state
   const [usageErrorDialog, setUsageErrorDialog] = React.useState<{ open: boolean; data: any }>({ open: false, data: null });
+
+  // Send email dialog state
+  const [sendEmailDialogOpen, setSendEmailDialogOpen] = React.useState<boolean>(false);
+  const [emailSubject, setEmailSubject] = React.useState<string>('');
+  const [emailBody, setEmailBody] = React.useState<string>('');
+  const [attachDocument, setAttachDocument] = React.useState<boolean>(true);
+  const [sendingEmail, setSendingEmail] = React.useState<boolean>(false);
 
   // Debounce search
   const debouncedSearch = useDebounce(search, 300);
@@ -98,7 +114,9 @@ export function InvoicesTable(): React.JSX.Element {
   const fetchInvoices = React.useCallback(async () => {
     setLoading(true);
     try {
-      const result = await authClient.getInvoices(page, rowsPerPage, {
+      const result = await authClient.getInvoices({
+        page,
+        per_page: rowsPerPage,
         search: debouncedSearch,
         status: status || undefined,
       });
@@ -174,6 +192,7 @@ export function InvoicesTable(): React.JSX.Element {
     if (selectedInvoice) {
       setEditingInvoice(selectedInvoice);
       setEditStatus(selectedInvoice.status);
+      setOldStatus(selectedInvoice.status); // Store old status
       setEditDueDate(selectedInvoice.due_date ? new Date(selectedInvoice.due_date).toISOString().split('T')[0] : '');
       setEditDialogOpen(true);
     }
@@ -186,28 +205,66 @@ export function InvoicesTable(): React.JSX.Element {
       return;
     }
 
-    const updates: any = {
-      status: editStatus,
-    };
-
-    if (editDueDate) {
-      updates.due_date = new Date(editDueDate).toISOString();
-    } else {
-      updates.due_date = null;
+    // Validate due date is required and after today
+    if (!editDueDate) {
+      alert('Due date is required for invoices');
+      return;
     }
 
-    const result = await authClient.updateInvoice(editingInvoice.id, updates);
+    const selectedDate = new Date(editDueDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (selectedDate <= today) {
+      alert('Due date must be after today');
+      return;
+    }
+
+    const updates: any = {
+      status: editStatus,
+      due_date: new Date(editDueDate).toISOString(),
+    };
+
+    // Check if status changed to paid
+    const statusChanged = editStatus !== oldStatus;
+    const shouldAskForNotification = statusChanged && editStatus === 'paid';
+
+    if (shouldAskForNotification) {
+      // Show confirmation dialog instead of saving directly
+      setPendingUpdate(updates);
+      setEmailConfirmDialogOpen(true);
+    } else {
+      // Save directly without email notification
+      await performUpdate({ ...updates, send_notification_email: false });
+    }
+  };
+
+  const performUpdate = async (data: any) => {
+    if (!editingInvoice) return;
+
+    const result = await authClient.updateInvoice(editingInvoice.id, data);
 
     if (!result.error) {
       setEditDialogOpen(false);
+      setEmailConfirmDialogOpen(false);
       setEditingInvoice(null);
       setEditStatus('');
       setEditDueDate('');
+      setOldStatus('');
+      setPendingUpdate(null);
       await fetchInvoices();
     } else {
       console.error('Update error:', result.error);
       alert(result.error);
     }
+  };
+
+  const handleSendEmail = () => {
+    performUpdate({ ...pendingUpdate, send_notification_email: true });
+  };
+
+  const handleSkipEmail = () => {
+    performUpdate({ ...pendingUpdate, send_notification_email: false });
   };
 
   const handleCancelEdit = () => {
@@ -250,6 +307,47 @@ export function InvoicesTable(): React.JSX.Element {
   const handleDeleteCancel = () => {
     setDeleteDialogOpen(false);
     setSelectedInvoice(null);
+  };
+
+  const handleSendEmailClick = () => {
+    if (selectedInvoice) {
+      setEmailSubject(`Invoice ${selectedInvoice.invoice_number}`);
+      setEmailBody(`Dear ${selectedInvoice.selected_contact.name},\n\nPlease find attached the invoice ${selectedInvoice.invoice_number}.\n\nBest regards`);
+      setSendEmailDialogOpen(true);
+    }
+    handleMenuClose();
+  };
+
+  const handleSendEmailConfirm = async () => {
+    if (!selectedInvoice) return;
+
+    try {
+      setSendingEmail(true);
+      await authClient.sendEmail({
+        recipient_email: selectedInvoice.selected_contact.email,
+        subject: emailSubject,
+        body: emailBody.replace(/\n/g, '<br>'),
+        invoice_id: selectedInvoice.id,
+        attach_document: attachDocument,
+      });
+      alert('Email sent successfully!');
+      setSendEmailDialogOpen(false);
+      setEmailSubject('');
+      setEmailBody('');
+      setAttachDocument(true);
+    } catch (error) {
+      console.error('Failed to send email:', error);
+      alert('Failed to send email. Please check your email settings.');
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  const handleSendEmailCancel = () => {
+    setSendEmailDialogOpen(false);
+    setEmailSubject('');
+    setEmailBody('');
+    setAttachDocument(true);
   };
 
   const getStatusColor = (status: string) => {
@@ -469,12 +567,14 @@ export function InvoicesTable(): React.JSX.Element {
 
             <TextField
               fullWidth
+              required
               label="Due Date"
               type="date"
               value={editDueDate}
               onChange={(e) => setEditDueDate(e.target.value)}
               InputLabelProps={{ shrink: true }}
-              helperText="Leave empty to remove due date"
+              helperText="When payment is due (must be after today)"
+              inputProps={{ min: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0] }}
             />
           </Stack>
         </DialogContent>
@@ -482,6 +582,60 @@ export function InvoicesTable(): React.JSX.Element {
           <Button onClick={handleCancelEdit}>Cancel</Button>
           <Button onClick={handleSaveDetails} variant="contained">
             Save Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Email Notification Confirmation Dialog */}
+      <Dialog
+        open={emailConfirmDialogOpen}
+        onClose={() => setEmailConfirmDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogContent sx={{ pt: 3 }}>
+          {/* Icon */}
+          <Box sx={{ textAlign: 'center', mb: 2 }}>
+            <EmailIcon sx={{ fontSize: 48, color: 'primary.main' }} />
+          </Box>
+
+          {/* Title */}
+          <Typography variant="h6" align="center" gutterBottom>
+            Send Notification Email?
+          </Typography>
+
+          {/* Status Change Info */}
+          <Alert severity="info" sx={{ mb: 2 }}>
+            <AlertTitle>Status Changed</AlertTitle>
+            <strong>{oldStatus}</strong> → <strong>{editStatus}</strong>
+          </Alert>
+
+          {/* Recipient Info */}
+          {editingInvoice && (
+            <Box sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 1, mb: 2 }}>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                <strong>Recipient:</strong>
+              </Typography>
+              <Typography variant="body1">
+                {editingInvoice.selected_contact.name}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {editingInvoice.selected_contact.email}
+              </Typography>
+            </Box>
+          )}
+
+          <Typography variant="body2" color="text.secondary" align="center">
+            Would you like to notify the client about this payment confirmation?
+          </Typography>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button onClick={handleSendEmail} variant="outlined" fullWidth>
+            Send Notification
+          </Button>
+          <Button onClick={handleSkipEmail} variant="contained" fullWidth>
+            Skip Email
           </Button>
         </DialogActions>
       </Dialog>
@@ -555,6 +709,57 @@ export function InvoicesTable(): React.JSX.Element {
         <DialogActions>
           <Button onClick={() => setUsageErrorDialog({ open: false, data: null })} variant="contained">
             Got it
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Send Email Dialog */}
+      <Dialog open={sendEmailDialogOpen} onClose={handleSendEmailCancel} maxWidth="md" fullWidth>
+        <DialogTitle>Send Email</DialogTitle>
+        <DialogContent>
+          <Stack spacing={3} sx={{ mt: 2 }}>
+            <Alert severity="info">
+              Sending to: {selectedInvoice?.selected_contact.email} ({selectedInvoice?.selected_contact.name})
+            </Alert>
+
+            <TextField
+              fullWidth
+              label="Subject"
+              value={emailSubject}
+              onChange={(e) => setEmailSubject(e.target.value)}
+            />
+
+            <TextField
+              fullWidth
+              multiline
+              rows={8}
+              label="Email Body"
+              value={emailBody}
+              onChange={(e) => setEmailBody(e.target.value)}
+              helperText="Write your email message here"
+            />
+
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={attachDocument}
+                  onChange={(e) => setAttachDocument(e.target.checked)}
+                />
+              }
+              label="Attach Invoice Document"
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleSendEmailCancel} disabled={sendingEmail}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSendEmailConfirm}
+            variant="contained"
+            disabled={sendingEmail || !emailSubject || !emailBody}
+          >
+            {sendingEmail ? 'Sending...' : 'Send Email'}
           </Button>
         </DialogActions>
       </Dialog>
