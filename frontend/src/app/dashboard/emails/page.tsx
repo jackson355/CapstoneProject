@@ -113,7 +113,7 @@ export default function EmailsPage(): React.JSX.Element {
                     }}
                   >
                   <CardActionArea
-                    onClick={() => router.push(item.path)}
+                    onClick={() => router.push(menuItem.path)}
                     sx={{
                       height: '100%',
                       p: 3,
@@ -129,7 +129,7 @@ export default function EmailsPage(): React.JSX.Element {
                           width: 56,
                           height: 56,
                           borderRadius: 2,
-                          bgcolor: item.color,
+                          bgcolor: menuItem.color,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -139,10 +139,10 @@ export default function EmailsPage(): React.JSX.Element {
                       </Box>
                       <Box>
                         <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
-                          {item.title}
+                          {menuItem.title}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {item.description}
+                          {menuItem.description}
                         </Typography>
                       </Box>
                     </Stack>
