@@ -33,6 +33,7 @@ interface Quotation {
   selected_contact: { name: string; email: string };
   client: { company_name: string };
   status: string;
+  due_date?: string;
 }
 
 interface Invoice {
@@ -41,6 +42,7 @@ interface Invoice {
   selected_contact: { name: string; email: string };
   client: { company_name: string };
   status: string;
+  due_date?: string;
 }
 
 interface EmailTemplate {
@@ -351,7 +353,10 @@ export default function SendEmailPage(): React.JSX.Element {
               my_company_name: 'megapixel',
               my_company_email: 'contact@megapixel.sg',
               my_company_phone: '+65 1234 5678',
-              due_date: '',
+              due_date: (() => {
+                const dueDate = documentType === 'quotation' ? (selectedDocument as Quotation)?.due_date : (selectedDocument as Invoice)?.due_date;
+                return dueDate ? new Date(dueDate).toLocaleDateString('en-GB') : '';
+              })(),
               current_date: new Date().toLocaleDateString('en-GB'),
               quotation_status: documentType === 'quotation' ? (selectedDocument as Quotation)?.status || '' : '',
               invoice_status: documentType === 'invoice' ? (selectedDocument as Invoice)?.status || '' : '',
@@ -369,7 +374,14 @@ export default function SendEmailPage(): React.JSX.Element {
               { key: 'my_company_name', label: 'My Company Name', value: 'megapixel' },
               { key: 'my_company_email', label: 'My Company Email', value: 'contact@megapixel.sg' },
               { key: 'my_company_phone', label: 'My Company Phone', value: '+65 1234 5678' },
-              { key: 'due_date', label: 'Due Date', value: '' },
+              {
+                key: 'due_date',
+                label: 'Due Date',
+                value: (() => {
+                  const dueDate = documentType === 'quotation' ? (selectedDocument as Quotation)?.due_date : (selectedDocument as Invoice)?.due_date;
+                  return dueDate ? new Date(dueDate).toLocaleDateString('en-GB') : '';
+                })()
+              },
               { key: 'current_date', label: 'Current Date', value: new Date().toLocaleDateString('en-GB') },
               ...(documentType === 'quotation'
                 ? [{ key: 'quotation_status', label: 'Quotation Status', value: (selectedDocument as Quotation)?.status || '' }]
