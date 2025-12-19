@@ -26,6 +26,7 @@ import { Eye as EyeIcon } from '@phosphor-icons/react/dist/ssr/Eye';
 import { EyeSlash as EyeSlashIcon } from '@phosphor-icons/react/dist/ssr/EyeSlash';
 import { authClient } from '@/lib/auth/client';
 import { logger } from '@/lib/default-logger';
+import { WYSIWYGEmailEditor } from '@/components/dashboard/email/wysiwyg-email-editor';
 
 export default function EmailSettingsPage(): React.JSX.Element {
   const [loading, setLoading] = React.useState<boolean>(true);
@@ -382,18 +383,16 @@ export default function EmailSettingsPage(): React.JSX.Element {
         </Card>
 
         <Card>
-          <CardHeader title="Email Signature" />
+          <CardHeader title="Email Signature" subheader="Signature automatically added to all outgoing emails" />
           <Divider />
           <CardContent>
-            <TextField
-              fullWidth
-              multiline
-              rows={6}
-              label="Signature"
-              value={settings.email_signature}
-              onChange={handleChange('email_signature')}
-              placeholder="Best regards,&#10;Your Company&#10;www.yourcompany.com"
-              helperText="Signature added to all outgoing emails"
+            <WYSIWYGEmailEditor
+              subject=""
+              body={settings.email_signature}
+              onSubjectChange={() => {}}
+              onBodyChange={(value) => setSettings({ ...settings, email_signature: value })}
+              variables={{}}
+              availableVariables={[]}
             />
           </CardContent>
         </Card>
