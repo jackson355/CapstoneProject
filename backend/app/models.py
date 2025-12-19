@@ -23,6 +23,24 @@ class Role(Base):
 
     users = relationship('User', back_populates='role')
 
+class Partner(Base):
+    __tablename__ = 'partners'
+
+    id = Column(Integer, primary_key=True, index=True)
+    company_name = Column(String(100), nullable=False)
+    contact_person_name = Column(String(100), nullable=False)
+    phone_number = Column(String(20), nullable=True)
+    email_address = Column(String(100), nullable=True)
+
+    # Contract file storage
+    contract_file_path = Column(String(500), nullable=True)
+    contract_file_name = Column(String(255), nullable=True)
+    contract_file_size = Column(Integer, nullable=True)
+    contract_mime_type = Column(String(100), nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
 class Client(Base):
     __tablename__ = 'clients'
 
@@ -33,6 +51,10 @@ class Client(Base):
     contacts = Column(JSON, nullable=False)  # JSON array of contact objects
     address = Column(String(200), nullable=True)
     postal_code = Column(String(10), nullable=True)
+
+    # Partner/Referral relationship
+    partner_id = Column(Integer, ForeignKey('partners.id'), nullable=True, index=True)
+    partner = relationship('Partner')
 
 class ActivityLog(Base):
     __tablename__ = 'activity_logs'

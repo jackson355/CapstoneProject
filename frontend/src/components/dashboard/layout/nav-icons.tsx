@@ -10,6 +10,7 @@ import { UsersIcon } from '@phosphor-icons/react/dist/ssr/Users';
 import { XSquare } from '@phosphor-icons/react/dist/ssr/XSquare';
 import { EnvelopeSimpleIcon } from '@phosphor-icons/react/dist/ssr/EnvelopeSimple';
 import { BuildingsIcon } from '@phosphor-icons/react/dist/ssr/Buildings';
+import { HandshakeIcon } from '@phosphor-icons/react/dist/ssr/Handshake';
 
 export const navIcons = {
   'chart-pie': ChartPieIcon,
@@ -20,6 +21,7 @@ export const navIcons = {
   'file-invoice': InvoiceIcon,
   'envelope-simple': EnvelopeSimpleIcon,
   'buildings': BuildingsIcon,
+  'handshake': HandshakeIcon,
   'x-square': XSquare,
   user: UserIcon,
   users: UsersIcon,

@@ -1052,6 +1052,171 @@ class AuthClient {
     }
   }
 
+  // Partner API methods
+
+  async getPartners(page = 0, perPage = 100, search?: string): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const params = new URLSearchParams({ page: String(page), per_page: String(perPage) });
+      if (search) params.set('search', search);
+      const res = await fetch(`${config.api.baseUrl}/partners?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to fetch partners';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async createPartner(formData: FormData): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/partners/`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to create partner';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async getPartnerById(partnerId: number): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/partners/${partnerId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to fetch partner';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async updatePartner(partnerId: number, formData: FormData): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/partners/${partnerId}`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to update partner';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async deletePartner(partnerId: number): Promise<{ error?: string }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/partners/${partnerId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to delete partner';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      return {};
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
+  async downloadPartnerContract(partnerId: number): Promise<{ error?: string; blob?: Blob; filename?: string }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/partners/${partnerId}/contract`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to download contract';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const blob = await res.blob();
+      const contentDisposition = res.headers.get('content-disposition');
+      let filename = 'contract.pdf';
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="(.+)"/);
+        if (match) filename = match[1];
+      }
+
+      return { blob, filename };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
+
   // Invoice API methods
 
   async getInvoices(params: { page?: number; per_page?: number; search?: string; status?: string; client_id?: number; quotation_id?: number } = {}): Promise<{ error?: string; data?: any }> {

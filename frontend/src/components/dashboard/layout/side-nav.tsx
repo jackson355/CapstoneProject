@@ -90,7 +90,8 @@ export function SideNav(): React.JSX.Element {
         '&::-webkit-scrollbar': { display: 'none' },
       }}
     >
-      <Stack spacing={2} sx={{ p: isNavOpen ? 3 : 1 }}>
+      {/* Fixed Header - Logo */}
+      <Stack spacing={2} sx={{ p: isNavOpen ? 3 : 1, flex: '0 0 auto' }}>
         <Box component={RouterLink} href={paths.home} sx={{ display: 'inline-flex', justifyContent: isNavOpen ? 'flex-start' : 'center' }}>
           {isNavOpen ? (
             <Logo color="light" height={50} width={200} />
@@ -103,46 +104,68 @@ export function SideNav(): React.JSX.Element {
       </Stack>
       <Divider sx={{ borderColor: 'var(--mui-palette-neutral-700)' }} />
 
-      {/* MAIN MENU section */}
+      {/* Scrollable Content Area */}
       <Box
-        component="nav"
-        role="navigation"
-        aria-label="Primary"
-        sx={{ flex: '0 0 auto', p: '12px' }}
+        sx={{
+          flex: '1 1 auto',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          '&::-webkit-scrollbar': {
+            width: '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            bgcolor: 'transparent',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            bgcolor: 'var(--mui-palette-neutral-700)',
+            borderRadius: '4px',
+            '&:hover': {
+              bgcolor: 'var(--mui-palette-neutral-600)',
+            },
+          },
+        }}
       >
-        {isNavOpen && (
-          <Typography
-            variant="overline"
-            sx={{ color: 'var(--mui-palette-neutral-400)', px: '8px', display: 'block', mb: 1 }}
-          >
-            MAIN MENU
-          </Typography>
-        )}
-        {renderNavItems({ pathname, items: mainItems, isCollapsed: !isNavOpen })}
-      </Box>
+        {/* MAIN MENU section */}
+        <Box
+          component="nav"
+          role="navigation"
+          aria-label="Primary"
+          sx={{ p: '12px' }}
+        >
+          {isNavOpen && (
+            <Typography
+              variant="overline"
+              sx={{ color: 'var(--mui-palette-neutral-400)', px: '8px', display: 'block', mb: 1 }}
+            >
+              MAIN MENU
+            </Typography>
+          )}
+          {renderNavItems({ pathname, items: mainItems, isCollapsed: !isNavOpen })}
+        </Box>
 
-      {/* ACCOUNT section */}
-      <Box
-        component="nav"
-        role="navigation"
-        aria-label="Account"
-        sx={{ flex: '1 1 auto', p: '12px' }}
-      >
-        {isNavOpen && (
-          <Typography
-            variant="overline"
-            sx={{ color: 'var(--mui-palette-neutral-400)', px: '8px', display: 'block', mb: 1, mt: 1 }}
-          >
-            ACCOUNT
-          </Typography>
-        )}
-        {renderNavItems({ pathname, items: accountItems, isCollapsed: !isNavOpen })}
+        {/* ACCOUNT section */}
+        <Box
+          component="nav"
+          role="navigation"
+          aria-label="Account"
+          sx={{ p: '12px' }}
+        >
+          {isNavOpen && (
+            <Typography
+              variant="overline"
+              sx={{ color: 'var(--mui-palette-neutral-400)', px: '8px', display: 'block', mb: 1, mt: 1 }}
+            >
+              ACCOUNT
+            </Typography>
+          )}
+          {renderNavItems({ pathname, items: accountItems, isCollapsed: !isNavOpen })}
+        </Box>
       </Box>
 
       <Divider sx={{ borderColor: 'var(--mui-palette-neutral-700)' }} />
 
-      {/* Log Out */}
-      <Box sx={{ p: '12px' }}>
+      {/* Fixed Footer - Log Out */}
+      <Box sx={{ p: '12px', flex: '0 0 auto' }}>
         <Box
           role="button"
           aria-label="Log Out"

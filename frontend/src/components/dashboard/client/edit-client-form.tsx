@@ -36,12 +36,18 @@ import LocalPostOfficeIcon from '@mui/icons-material/LocalPostOffice';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import PhoneIcon from '@mui/icons-material/Phone';
 import EmailIcon from '@mui/icons-material/Email';
+import HandshakeIcon from '@mui/icons-material/Handshake';
 import MenuItem from '@mui/material/MenuItem';
 
 interface ContactInfo {
   name: string;
   phone: string;
   email: string;
+}
+
+interface Partner {
+  id: number;
+  company_name: string;
 }
 
 export function EditClientForm({ clientId }: { clientId: number }) {
@@ -54,6 +60,8 @@ export function EditClientForm({ clientId }: { clientId: number }) {
   const [contacts, setContacts] = React.useState<ContactInfo[]>([{ name: '', phone: '', email: '' }]);
   const [address, setAddress] = React.useState('');
   const [postalCode, setPostalCode] = React.useState('');
+  const [partnerId, setPartnerId] = React.useState<number | ''>('');
+  const [partners, setPartners] = React.useState<Partner[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
@@ -116,6 +124,7 @@ export function EditClientForm({ clientId }: { clientId: number }) {
           setContacts(data.contacts && data.contacts.length > 0 ? data.contacts : [{ name: '', phone: '', email: '' }]);
           setAddress(data.address ?? '');
           setPostalCode(data.postal_code ?? '');
+          setPartnerId(data.partner_id ?? '');
         }
       } catch {
         setError('Failed to load client data');
@@ -125,6 +134,26 @@ export function EditClientForm({ clientId }: { clientId: number }) {
     };
     fetchData();
   }, [clientId]);
+
+  // Fetch partners on mount
+  React.useEffect(() => {
+    const fetchPartners = async () => {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+      if (!token) return;
+      try {
+        const res = await fetch(`${config.api.baseUrl}/partners?page=0&per_page=100`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setPartners(data.partners || []);
+        }
+      } catch (err) {
+        console.error('Failed to fetch partners', err);
+      }
+    };
+    fetchPartners();
+  }, []);
 
   const addContact = () => setContacts([...contacts, { name: '', phone: '', email: '' }]);
   const removeContact = (index: number) => contacts.length > 1 && setContacts(contacts.filter((_, i) => i !== index));
@@ -183,6 +212,7 @@ export function EditClientForm({ clientId }: { clientId: number }) {
           contacts: normalizedContacts,
           address: address.trim() || undefined,
           postal_code: postalCode.trim() || undefined,
+          partner_id: partnerId === '' ? null : partnerId,
         }),
       });
 
@@ -352,6 +382,42 @@ export function EditClientForm({ clientId }: { clientId: number }) {
                 />
               </Grid>
             )}
+
+            {/* Partner/Referral (Optional) */}
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                select
+                label="Partner / Referral (Optional)"
+                value={partnerId}
+                onChange={(e) => setPartnerId(e.target.value === '' ? '' : Number(e.target.value))}
+                SelectProps={{
+                  displayEmpty: true,
+                  renderValue: (selected) => {
+                    if (!selected) {
+                      return <Typography variant="body2" color="text.secondary">Select partner (optional)</Typography>;
+                    }
+                    const partner = partners.find(p => p.id === selected);
+                    return partner?.company_name || '';
+                  },
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <HandshakeIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                }}
+                helperText="Select if this client was referred by a partner"
+              >
+                <MenuItem value="">
+                  <Typography variant="body2" color="text.secondary">None</Typography>
+                </MenuItem>
+                {partners.map((partner) => (
+                  <MenuItem key={partner.id} value={partner.id}>{partner.company_name}</MenuItem>
+                ))}
+              </TextField>
+            </Grid>
 
             {/* Address */}
             <Grid size={{ xs: 12, md: 6 }}>

@@ -34,6 +34,7 @@ import { EnvelopeSimple as EmailIcon } from '@phosphor-icons/react/dist/ssr/Enve
 import { authClient } from '@/lib/auth/client';
 import { logger } from '@/lib/default-logger';
 import { format } from 'date-fns';
+import { WYSIWYGEmailEditor } from '@/components/dashboard/email/wysiwyg-email-editor';
 
 interface EmailTemplate {
   id: number;
@@ -384,42 +385,18 @@ export default function EmailTemplatesPage(): React.JSX.Element {
               </Typography>
             </FormControl>
 
-            <TextField
-              fullWidth
-              label="Subject"
-              value={formData.subject}
-              onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-              placeholder="Following up on {{quotation_number}}"
-              helperText="Email subject line (you can use variables like {{quotation_number}})"
+            <WYSIWYGEmailEditor
+              subject={formData.subject}
+              body={formData.body}
+              onSubjectChange={(value) => setFormData({ ...formData, subject: value })}
+              onBodyChange={(value) => setFormData({ ...formData, body: value })}
+              variables={{}}
+              availableVariables={AVAILABLE_VARIABLES.map(v => ({
+                key: v.replace(/{{|}}/g, ''),
+                label: v.replace(/{{|}}/g, '').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+                value: v
+              }))}
             />
-
-            <TextField
-              fullWidth
-              multiline
-              rows={10}
-              label="Email Body"
-              value={formData.body}
-              onChange={(e) => setFormData({ ...formData, body: e.target.value })}
-              placeholder="Dear {{contact_name}},&#10;&#10;We are following up on..."
-              helperText="Email content (supports HTML tags like <b>, <i>, <br>, etc.)"
-            />
-
-            <Box>
-              <Typography variant="subtitle2" gutterBottom>
-                Available Variables (click to insert):
-              </Typography>
-              <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
-                {AVAILABLE_VARIABLES.map((variable) => (
-                  <Chip
-                    key={variable}
-                    label={variable}
-                    size="small"
-                    onClick={() => insertVariable(variable)}
-                    sx={{ cursor: 'pointer', mb: 0.5 }}
-                  />
-                ))}
-              </Stack>
-            </Box>
 
             <FormControlLabel
               control={
@@ -475,40 +452,18 @@ export default function EmailTemplatesPage(): React.JSX.Element {
               </Typography>
             </FormControl>
 
-            <TextField
-              fullWidth
-              label="Subject"
-              value={formData.subject}
-              onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-              helperText="Email subject line (you can use variables like {{quotation_number}})"
+            <WYSIWYGEmailEditor
+              subject={formData.subject}
+              body={formData.body}
+              onSubjectChange={(value) => setFormData({ ...formData, subject: value })}
+              onBodyChange={(value) => setFormData({ ...formData, body: value })}
+              variables={{}}
+              availableVariables={AVAILABLE_VARIABLES.map(v => ({
+                key: v.replace(/{{|}}/g, ''),
+                label: v.replace(/{{|}}/g, '').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+                value: v
+              }))}
             />
-
-            <TextField
-              fullWidth
-              multiline
-              rows={10}
-              label="Email Body"
-              value={formData.body}
-              onChange={(e) => setFormData({ ...formData, body: e.target.value })}
-              helperText="Email content (supports HTML tags like <b>, <i>, <br>, etc.)"
-            />
-
-            <Box>
-              <Typography variant="subtitle2" gutterBottom>
-                Available Variables (click to insert):
-              </Typography>
-              <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
-                {AVAILABLE_VARIABLES.map((variable) => (
-                  <Chip
-                    key={variable}
-                    label={variable}
-                    size="small"
-                    onClick={() => insertVariable(variable)}
-                    sx={{ cursor: 'pointer', mb: 0.5 }}
-                  />
-                ))}
-              </Stack>
-            </Box>
 
             <FormControlLabel
               control={

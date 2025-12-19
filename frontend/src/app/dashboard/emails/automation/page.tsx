@@ -25,6 +25,7 @@ import {
 import { CaretDown as ExpandIcon } from '@phosphor-icons/react/dist/ssr/CaretDown';
 import { authClient } from '@/lib/auth/client';
 import { logger } from '@/lib/default-logger';
+import { WYSIWYGEmailEditor } from '@/components/dashboard/email/wysiwyg-email-editor';
 
 interface AutomationTemplate {
   id?: number;
@@ -205,35 +206,17 @@ export default function EmailAutomationPage(): React.JSX.Element {
         </AccordionSummary>
         <AccordionDetails>
           <Stack spacing={3}>
-            <Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                Available Variables:
-              </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap">
-                {getAvailableVariables(key).map((variable) => (
-                  <Chip key={variable} label={variable} size="small" variant="outlined" />
-                ))}
-              </Stack>
-            </Box>
-
-            <TextField
-              fullWidth
-              label="Email Subject"
-              value={template.subject}
-              onChange={(e) => handleTemplateChange(key, 'subject', e.target.value)}
-              required
-              helperText="Use variables from the list above"
-            />
-
-            <TextField
-              fullWidth
-              multiline
-              rows={12}
-              label="Email Body"
-              value={template.body}
-              onChange={(e) => handleTemplateChange(key, 'body', e.target.value)}
-              required
-              helperText="Supports HTML tags. Use variables from the list above"
+            <WYSIWYGEmailEditor
+              subject={template.subject}
+              body={template.body}
+              onSubjectChange={(value) => handleTemplateChange(key, 'subject', value)}
+              onBodyChange={(value) => handleTemplateChange(key, 'body', value)}
+              variables={{}}
+              availableVariables={getAvailableVariables(key).map(v => ({
+                key: v.replace(/{{|}}/g, ''),
+                label: v.replace(/{{|}}/g, '').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+                value: v
+              }))}
             />
           </Stack>
         </AccordionDetails>

@@ -25,6 +25,7 @@ import { authClient } from '@/lib/auth/client';
 import { logger } from '@/lib/default-logger';
 import { useRouter } from 'next/navigation';
 import { paths } from '@/paths';
+import { WYSIWYGEmailEditor } from '@/components/dashboard/email/wysiwyg-email-editor';
 
 interface Quotation {
   id: number;
@@ -319,28 +320,6 @@ export default function SendEmailPage(): React.JSX.Element {
                 disabled={!selectedDocumentId}
               />
 
-              <TextField
-                fullWidth
-                label="Subject *"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                required
-                placeholder="Enter email subject..."
-                helperText="Email subject line"
-              />
-
-              <TextField
-                fullWidth
-                multiline
-                rows={12}
-                label="Email Body *"
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                required
-                placeholder="Compose your email message here...&#10;&#10;You can use line breaks and basic formatting."
-                helperText="Email content (supports HTML tags like <b>, <i>, <br>, etc.)"
-              />
-
               <FormControlLabel
                 control={
                   <Checkbox
@@ -353,6 +332,62 @@ export default function SendEmailPage(): React.JSX.Element {
             </Stack>
           </CardContent>
         </Card>
+
+        {/* WYSIWYG Email Editor */}
+        {selectedDocumentId && (
+          <WYSIWYGEmailEditor
+            subject={subject}
+            body={body}
+            onSubjectChange={setSubject}
+            onBodyChange={setBody}
+            variables={{
+              quotation_number: documentType === 'quotation' ? (selectedDocument as Quotation)?.quotation_number || '' : '',
+              invoice_number: documentType === 'invoice' ? (selectedDocument as Invoice)?.invoice_number || '' : '',
+              contact_name: selectedDocument?.selected_contact?.name || '',
+              contact_email: selectedDocument?.selected_contact?.email || '',
+              contact_phone: selectedDocument?.selected_contact?.phone || '',
+              client_company_name: selectedDocument?.client?.company_name || '',
+              client_address: selectedDocument?.client?.address || '',
+              my_company_name: 'megapixel',
+              my_company_email: 'contact@megapixel.sg',
+              my_company_phone: '+65 1234 5678',
+              due_date: (() => {
+                const dueDate = documentType === 'quotation' ? (selectedDocument as Quotation)?.due_date : (selectedDocument as Invoice)?.due_date;
+                return dueDate ? new Date(dueDate).toLocaleDateString('en-GB') : '';
+              })(),
+              current_date: new Date().toLocaleDateString('en-GB'),
+              quotation_status: documentType === 'quotation' ? (selectedDocument as Quotation)?.status || '' : '',
+              invoice_status: documentType === 'invoice' ? (selectedDocument as Invoice)?.status || '' : '',
+            }}
+            availableVariables={[
+              ...(documentType === 'quotation'
+                ? [{ key: 'quotation_number', label: 'Quotation Number', value: (selectedDocument as Quotation)?.quotation_number || '' }]
+                : [{ key: 'invoice_number', label: 'Invoice Number', value: (selectedDocument as Invoice)?.invoice_number || '' }]
+              ),
+              { key: 'contact_name', label: 'Contact Name', value: selectedDocument?.selected_contact?.name || '' },
+              { key: 'contact_email', label: 'Contact Email', value: selectedDocument?.selected_contact?.email || '' },
+              { key: 'contact_phone', label: 'Contact Phone', value: selectedDocument?.selected_contact?.phone || '' },
+              { key: 'client_company_name', label: 'Client Company Name', value: selectedDocument?.client?.company_name || '' },
+              { key: 'client_address', label: 'Client Address', value: selectedDocument?.client?.address || '' },
+              { key: 'my_company_name', label: 'My Company Name', value: 'megapixel' },
+              { key: 'my_company_email', label: 'My Company Email', value: 'contact@megapixel.sg' },
+              { key: 'my_company_phone', label: 'My Company Phone', value: '+65 1234 5678' },
+              {
+                key: 'due_date',
+                label: 'Due Date',
+                value: (() => {
+                  const dueDate = documentType === 'quotation' ? (selectedDocument as Quotation)?.due_date : (selectedDocument as Invoice)?.due_date;
+                  return dueDate ? new Date(dueDate).toLocaleDateString('en-GB') : '';
+                })()
+              },
+              { key: 'current_date', label: 'Current Date', value: new Date().toLocaleDateString('en-GB') },
+              ...(documentType === 'quotation'
+                ? [{ key: 'quotation_status', label: 'Quotation Status', value: (selectedDocument as Quotation)?.status || '' }]
+                : [{ key: 'invoice_status', label: 'Invoice Status', value: (selectedDocument as Invoice)?.status || '' }]
+              ),
+            ]}
+          />
+        )}
 
         <Card sx={{ bgcolor: 'background.default' }}>
           <CardContent>

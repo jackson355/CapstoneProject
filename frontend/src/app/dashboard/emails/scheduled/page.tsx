@@ -38,6 +38,7 @@ import { Eye as EyeIcon } from '@phosphor-icons/react/dist/ssr/Eye';
 import { authClient } from '@/lib/auth/client';
 import { logger } from '@/lib/default-logger';
 import { format } from 'date-fns';
+import { WYSIWYGEmailEditor } from '@/components/dashboard/email/wysiwyg-email-editor';
 
 interface ScheduledEmail {
   id: number;
@@ -377,24 +378,13 @@ export default function ScheduledEmailsPage(): React.JSX.Element {
               helperText="Email address of the recipient"
             />
 
-            <TextField
-              fullWidth
-              label="Subject"
-              value={formData.subject}
-              onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-              placeholder="Reminder: Quotation Due Soon"
-              helperText="Email subject line"
-            />
-
-            <TextField
-              fullWidth
-              multiline
-              rows={6}
-              label="Email Body"
-              value={formData.body}
-              onChange={(e) => setFormData({ ...formData, body: e.target.value })}
-              placeholder="Dear Client,&#10;&#10;This is a reminder that..."
-              helperText="Email content (supports HTML tags like <b>, <i>, <br>, etc.)"
+            <WYSIWYGEmailEditor
+              subject={formData.subject}
+              body={formData.body}
+              onSubjectChange={(value) => setFormData({ ...formData, subject: value })}
+              onBodyChange={(value) => setFormData({ ...formData, body: value })}
+              variables={{}}
+              availableVariables={[]}
             />
 
             <TextField

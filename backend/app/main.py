@@ -4,6 +4,7 @@ from app.api.auth import auth_router
 from app.api import users
 from app.api import roles
 from app.api import clients
+from app.api import partners
 from app.api import templates
 from app.api import quotations
 from app.api import invoices
@@ -38,6 +39,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition"],  # Expose Content-Disposition for file downloads
 )
 
 # Include authentication router
@@ -46,6 +48,7 @@ app.include_router(auth_router, prefix="/auth")
 app.include_router(users.router)
 app.include_router(roles.router)
 app.include_router(clients.router)
+app.include_router(partners.router)
 app.include_router(templates.router)
 app.include_router(quotations.router)
 app.include_router(invoices.router)
