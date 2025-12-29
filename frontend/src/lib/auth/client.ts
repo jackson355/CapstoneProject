@@ -2115,6 +2115,34 @@ class AuthClient {
       return { error: 'Network error' };
     }
   }
+
+  // Dashboard Methods
+
+  async getDashboardStatistics(): Promise<{ error?: string; data?: any }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${config.api.baseUrl}/dashboard/statistics`, {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        let message = 'Failed to fetch dashboard statistics';
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {}
+        return { error: message };
+      }
+
+      const data = await res.json();
+      return { data };
+    } catch {
+      return { error: 'Network error' };
+    }
+  }
 }
 
 export const authClient = new AuthClient();

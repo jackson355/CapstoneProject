@@ -10,6 +10,7 @@ from app.api import quotations
 from app.api import invoices
 from app.api import emails
 from app.api import company_settings
+from app.api import dashboard
 from app.db.session import get_db
 from app.models import ActivityLog
 from sqlalchemy.orm import Session
@@ -54,6 +55,7 @@ app.include_router(quotations.router)
 app.include_router(invoices.router)
 app.include_router(emails.router)
 app.include_router(company_settings.router, prefix="/company-settings", tags=["company-settings"])
+app.include_router(dashboard.router)
 
 @app.get("/")
 def read_root():
