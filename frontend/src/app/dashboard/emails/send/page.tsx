@@ -30,8 +30,8 @@ import { WYSIWYGEmailEditor } from '@/components/dashboard/email/wysiwyg-email-e
 interface Quotation {
   id: number;
   quotation_number: string;
-  selected_contact: { name: string; email: string };
-  client: { company_name: string };
+  selected_contact: { name: string; email: string; phone?: string };
+  client: { company_name: string; address?: string };
   status: string;
   due_date?: string;
 }
@@ -39,8 +39,8 @@ interface Quotation {
 interface Invoice {
   id: number;
   invoice_number: string;
-  selected_contact: { name: string; email: string };
-  client: { company_name: string };
+  selected_contact: { name: string; email: string; phone?: string };
+  client: { company_name: string; address?: string };
   status: string;
   due_date?: string;
 }
@@ -53,6 +53,15 @@ interface EmailTemplate {
   template_type: string;
 }
 
+interface CompanySettings {
+  id: number;
+  company_name: string;
+  company_email: string;
+  company_phone: string;
+  company_address: string;
+  company_website: string;
+}
+
 export default function SendEmailPage(): React.JSX.Element {
   const router = useRouter();
   const [loading, setLoading] = React.useState<boolean>(false);
@@ -63,6 +72,7 @@ export default function SendEmailPage(): React.JSX.Element {
   const [quotations, setQuotations] = React.useState<Quotation[]>([]);
   const [invoices, setInvoices] = React.useState<Invoice[]>([]);
   const [templates, setTemplates] = React.useState<EmailTemplate[]>([]);
+  const [companySettings, setCompanySettings] = React.useState<CompanySettings | null>(null);
 
   const [selectedDocumentId, setSelectedDocumentId] = React.useState<number | ''>('');
   const [selectedTemplateId, setSelectedTemplateId] = React.useState<number | ''>('');
@@ -79,21 +89,24 @@ export default function SendEmailPage(): React.JSX.Element {
     try {
       setLoading(true);
 
-      // Fetch quotations and invoices (page 0 = first page)
-      const [quotationsRes, invoicesRes, templatesRes] = await Promise.all([
+      // Fetch quotations, invoices, templates, and company settings
+      const [quotationsRes, invoicesRes, templatesRes, companyRes] = await Promise.all([
         authClient.getQuotations({ page: 0, per_page: 100 }),
         authClient.getInvoices({ page: 0, per_page: 100 }),
         authClient.getEmailTemplates({ template_type: documentType }),
+        authClient.getCompanySettings(),
       ]);
 
       console.log('Quotations response:', quotationsRes);
       console.log('Invoices response:', invoicesRes);
       console.log('Templates response:', templatesRes);
+      console.log('Company settings response:', companyRes);
 
       // Access data from the response object
       setQuotations(quotationsRes.data?.quotations || []);
       setInvoices(invoicesRes.data?.invoices || []);
       setTemplates(templatesRes.data || []);
+      setCompanySettings(companyRes.data || null);
 
       if (!quotationsRes.data?.quotations || quotationsRes.data.quotations.length === 0) {
         setMessage({ type: 'info', text: 'No quotations found. Please create a quotation first.' });
@@ -347,12 +360,12 @@ export default function SendEmailPage(): React.JSX.Element {
               invoice_number: documentType === 'invoice' ? (selectedDocument as Invoice)?.invoice_number || '' : '',
               contact_name: selectedDocument?.selected_contact?.name || '',
               contact_email: selectedDocument?.selected_contact?.email || '',
-              contact_phone: '',
+              contact_phone: selectedDocument?.selected_contact?.phone || '',
               client_company_name: selectedDocument?.client?.company_name || '',
-              client_address: '',
-              my_company_name: 'megapixel',
-              my_company_email: 'contact@megapixel.sg',
-              my_company_phone: '+65 1234 5678',
+              client_address: selectedDocument?.client?.address || '',
+              my_company_name: companySettings?.company_name || '',
+              my_company_email: companySettings?.company_email || '',
+              my_company_phone: companySettings?.company_phone || '',
               due_date: (() => {
                 const dueDate = documentType === 'quotation' ? (selectedDocument as Quotation)?.due_date : (selectedDocument as Invoice)?.due_date;
                 return dueDate ? new Date(dueDate).toLocaleDateString('en-GB') : '';
@@ -368,12 +381,12 @@ export default function SendEmailPage(): React.JSX.Element {
               ),
               { key: 'contact_name', label: 'Contact Name', value: selectedDocument?.selected_contact?.name || '' },
               { key: 'contact_email', label: 'Contact Email', value: selectedDocument?.selected_contact?.email || '' },
-              { key: 'contact_phone', label: 'Contact Phone', value: '' },
+              { key: 'contact_phone', label: 'Contact Phone', value: selectedDocument?.selected_contact?.phone || '' },
               { key: 'client_company_name', label: 'Client Company Name', value: selectedDocument?.client?.company_name || '' },
-              { key: 'client_address', label: 'Client Address', value: '' },
-              { key: 'my_company_name', label: 'My Company Name', value: 'megapixel' },
-              { key: 'my_company_email', label: 'My Company Email', value: 'contact@megapixel.sg' },
-              { key: 'my_company_phone', label: 'My Company Phone', value: '+65 1234 5678' },
+              { key: 'client_address', label: 'Client Address', value: selectedDocument?.client?.address || '' },
+              { key: 'my_company_name', label: 'My Company Name', value: companySettings?.company_name || '' },
+              { key: 'my_company_email', label: 'My Company Email', value: companySettings?.company_email || '' },
+              { key: 'my_company_phone', label: 'My Company Phone', value: companySettings?.company_phone || '' },
               {
                 key: 'due_date',
                 label: 'Due Date',
