@@ -70,9 +70,10 @@ class TestQuotationCreation:
         assert response.status_code == 200
         data = response.json()
 
-        # Verify quotation number format
-        assert data["quotation_number"].startswith("Q-2025-")
-        assert len(data["quotation_number"]) == 11  # Q-2025-0001
+        # Verify quotation number format (uses current year)
+        current_year = datetime.now().year
+        assert data["quotation_number"].startswith(f"Q-{current_year}-")
+        assert len(data["quotation_number"]) == 11  # Q-YYYY-0001
 
         # Verify data
         assert data["client_id"] == test_client_data.id
