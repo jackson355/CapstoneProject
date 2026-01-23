@@ -2,17 +2,15 @@
 
 import * as React from 'react';
 import Avatar from '@mui/material/Avatar';
-import Badge from '@mui/material/Badge';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
-import { BellIcon } from '@phosphor-icons/react/dist/ssr/Bell';
 import { ListIcon } from '@phosphor-icons/react/dist/ssr/List';
-import { UsersIcon } from '@phosphor-icons/react/dist/ssr/Users';
 
 import { usePopover } from '@/hooks/use-popover';
 import { useNavigation } from '@/contexts/navigation-context';
+import { useUser } from '@/hooks/use-user';
 
 import { MobileNav } from './mobile-nav';
 import { UserPopover } from './user-popover';
@@ -22,8 +20,20 @@ import { NotificationsPopover } from './notifications-popover';
 export function MainNav(): React.JSX.Element {
   const [openNav, setOpenNav] = React.useState<boolean>(false);
   const { toggleNav } = useNavigation();
+  const { user } = useUser();
 
   const userPopover = usePopover<HTMLDivElement>();
+
+  // Get first letter of user's name for avatar
+  const getInitial = (): string => {
+    if (user?.name) {
+      return user.name.charAt(0).toUpperCase();
+    }
+    if (user?.email) {
+      return user.email.charAt(0).toUpperCase();
+    }
+    return 'U';
+  };
 
   return (
     <React.Fragment>
@@ -72,18 +82,18 @@ export function MainNav(): React.JSX.Element {
 
           </Stack>
           <Stack sx={{ alignItems: 'center' }} direction="row" spacing={2}>
-            <Tooltip title="Contacts">
-              <IconButton aria-label="Contacts">
-                <UsersIcon />
-              </IconButton>
-            </Tooltip>
             <NotificationsPopover />
             <Avatar
               onClick={userPopover.handleOpen}
               ref={userPopover.anchorRef}
-              src="/assets/avatar.png"
-              sx={{ cursor: 'pointer' }}
-            />
+              sx={{
+                cursor: 'pointer',
+                bgcolor: 'var(--mui-palette-primary-main)',
+                color: 'var(--mui-palette-primary-contrastText)',
+              }}
+            >
+              {getInitial()}
+            </Avatar>
           </Stack>
         </Stack>
       </Box>

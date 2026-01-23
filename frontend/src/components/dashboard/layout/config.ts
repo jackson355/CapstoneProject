@@ -11,6 +11,5 @@ export const navItems = [
   { key: 'invoices', title: 'Invoice Management', href: paths.dashboard.invoices, icon: 'file-invoice' },
   { key: 'emails', title: 'Email Management', href: paths.dashboard.emails, icon: 'envelope-simple' },
   { key: 'company-settings', title: 'Company Settings', href: paths.dashboard.companySettings, icon: 'buildings' },
-  { key: 'settings', title: 'Settings', href: paths.dashboard.settings, icon: 'gear-six' },
   { key: 'account', title: 'Account', href: paths.dashboard.account, icon: 'user' },
 ] satisfies NavItemConfig[];
