@@ -1,4 +1,5 @@
-version: '3.8'
+
+version: "3.8"
 
 services:
   postgres:
@@ -26,20 +27,43 @@ services:
       - "9998:443"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
 
   onlyoffice:
     image: onlyoffice/documentserver
     restart: always
     container_name: onlyoffice-docs
     environment:
-      - JWT_ENABLED=false
-      - JWT_SECRET=your_jwt_secret
-      - ALLOW_PRIVATE_IP_ADDRESS=true
+      JWT_ENABLED: "false"
+      JWT_SECRET: your_jwt_secret
+      ALLOW_PRIVATE_IP_ADDRESS: "true"
     ports:
       - "8080:80"
     volumes:
       - onlyoffice_data:/var/www/onlyoffice/Data
       - onlyoffice_logs:/var/log/onlyoffice
+
+  backend:
+    build: ./backend
+    container_name: fastapi-backend
+    restart: always
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - onlyoffice
+
+  frontend:
+    build: ./frontend
+    container_name: nextjs-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:
