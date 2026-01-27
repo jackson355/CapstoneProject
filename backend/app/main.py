@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.auth import auth_router
@@ -18,6 +19,9 @@ from app.background_jobs import start_background_jobs, shutdown_background_jobs
 
 app = FastAPI()
 
+# CORS origins from environment variable (comma-separated) or defaults
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8080").split(",")
+
 # Startup and shutdown events for background jobs
 @app.on_event("startup")
 def on_startup():
@@ -32,11 +36,7 @@ def on_shutdown():
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # Next.js frontend
-        "http://localhost:8080",  # OnlyOffice Document Server
-        "*"  # Allow all for development
-    ],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],

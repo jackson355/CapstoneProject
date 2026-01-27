@@ -16,6 +16,9 @@ from app.services.email_scheduler import EmailScheduler
 
 router = APIRouter(prefix="/quotations", tags=["quotations"])
 
+# OnlyOffice configuration from environment variables
+BACKEND_CALLBACK_URL = os.getenv("BACKEND_CALLBACK_URL", "http://host.docker.internal:8000")
+
 # RBAC dependency for admin/superadmin access
 def require_admin_or_superadmin(current_user: UserOut = Depends(get_current_user), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == current_user.id).first()
@@ -430,7 +433,7 @@ def get_onlyoffice_config(
             "fileType": "docx",
             "key": f"{quotation_id}_{int(datetime.utcnow().timestamp())}",
             "title": quotation.file_name or f"{quotation.quotation_number}.docx",
-            "url": f"http://host.docker.internal:8000/quotations/document/{quotation_id}",
+            "url": f"{BACKEND_CALLBACK_URL}/quotations/document/{quotation_id}",
             "permissions": {
                 "edit": True,
                 "download": True,
@@ -441,7 +444,7 @@ def get_onlyoffice_config(
         },
         "documentType": "word",
         "editorConfig": {
-            "callbackUrl": f"http://host.docker.internal:8000/quotations/save/{quotation_id}",
+            "callbackUrl": f"{BACKEND_CALLBACK_URL}/quotations/save/{quotation_id}",
             "mode": "edit",
             "lang": "en",
             "user": {

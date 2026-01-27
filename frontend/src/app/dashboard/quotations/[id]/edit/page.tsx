@@ -14,6 +14,7 @@ import { Warning } from '@phosphor-icons/react/dist/ssr/Warning';
 import { authClient } from '@/lib/auth/client';
 import { paths } from '@/paths';
 import { RoleGuard } from '@/components/auth/role-guard';
+import { config } from '@/config';
 
 export default function Page(): React.JSX.Element {
   const params = useParams();
@@ -203,7 +204,7 @@ export default function Page(): React.JSX.Element {
         initWithDelay();
       });
       existingScript.addEventListener('error', () => {
-        setError('Failed to load OnlyOffice API. Make sure Document Server is running on port 8080.');
+        setError('Failed to load OnlyOffice API. Make sure Document Server is running.');
       });
       return;
     }
@@ -211,7 +212,7 @@ export default function Page(): React.JSX.Element {
     // Load OnlyOffice script
     console.log('Loading OnlyOffice script');
     const script = document.createElement('script');
-    script.src = 'http://localhost:8080/web-apps/apps/api/documents/api.js';
+    script.src = config.onlyoffice.apiUrl;
     script.async = true;
 
     script.onload = () => {
@@ -220,7 +221,7 @@ export default function Page(): React.JSX.Element {
     };
     script.onerror = () => {
       console.error('Script failed to load');
-      setError('Failed to load OnlyOffice API. Make sure Document Server is running on port 8080.');
+      setError('Failed to load OnlyOffice API. Make sure Document Server is running.');
     };
 
     document.head.appendChild(script);

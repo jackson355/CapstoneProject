@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import timedelta, datetime
 import jwt
+import os
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 
@@ -11,10 +12,12 @@ from app.db.session import get_db
 from app.models import User as UserModel, ActivityLog
 from app.schemas.user import UserOut  # Assuming your user output schema is here
 
-# Secret key for JWT
-SECRET_KEY = "your_secret_key"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 120  # 2 hours
+# JWT Configuration from environment variables
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError("JWT_SECRET_KEY environment variable is required")
+ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "120"))
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 

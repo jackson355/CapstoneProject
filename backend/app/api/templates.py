@@ -21,6 +21,9 @@ from app.services.quotation_filler import quotation_filler
 
 router = APIRouter(prefix="/templates", tags=["templates"])
 
+# OnlyOffice configuration from environment variables
+BACKEND_CALLBACK_URL = os.getenv("BACKEND_CALLBACK_URL", "http://host.docker.internal:8000")
+
 # RBAC dependency for admin/superadmin access
 def require_admin_or_superadmin(current_user: UserOut = Depends(get_current_user), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == current_user.id).first()
@@ -500,7 +503,7 @@ def get_onlyoffice_config(
             "fileType": "docx",
             "key": f"{template_id}_{int(datetime.utcnow().timestamp())}",
             "title": template.name,
-            "url": f"http://host.docker.internal:8000/templates/document/{template_id}",
+            "url": f"{BACKEND_CALLBACK_URL}/templates/document/{template_id}",
             "permissions": {
                 "edit": True,
                 "download": True,
@@ -511,7 +514,7 @@ def get_onlyoffice_config(
         },
         "documentType": "word",
         "editorConfig": {
-            "callbackUrl": f"http://host.docker.internal:8000/templates/save/{template_id}",
+            "callbackUrl": f"{BACKEND_CALLBACK_URL}/templates/save/{template_id}",
             "mode": "edit",
             "lang": "en",
             "user": {

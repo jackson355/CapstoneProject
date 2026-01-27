@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { Box, CircularProgress, Alert, Button } from '@mui/material'
 import { ArrowBack } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
+import { config } from '@/config'
 
 export default function OnlyOfficeEditor() {
   const searchParams = useSearchParams()
@@ -68,7 +69,7 @@ export default function OnlyOfficeEditor() {
     }
 
     const script = document.createElement('script')
-    script.src = 'http://localhost:8080/web-apps/apps/api/documents/api.js'
+    script.src = config.onlyoffice.apiUrl
     script.async = true
     script.onload = () => initializeEditor()
     script.onerror = () => {
@@ -112,7 +113,7 @@ export default function OnlyOfficeEditor() {
     try {
       // Fetch configuration from backend
       const token = localStorage.getItem('access_token')
-      const response = await fetch(`http://localhost:8000/templates/onlyoffice-config/${documentId}`, {
+      const response = await fetch(`${config.api.baseUrl}/templates/onlyoffice-config/${documentId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -123,10 +124,10 @@ export default function OnlyOfficeEditor() {
         throw new Error(`Failed to fetch config: ${response.status} ${response.statusText}`)
       }
 
-      const config = await response.json()
+      const editorConfig = await response.json()
 
       // Add frontend-specific event handlers
-      config.events = {
+      editorConfig.events = {
         onAppReady: () => {
           console.log('OnlyOffice app is ready')
         },
@@ -142,15 +143,15 @@ export default function OnlyOfficeEditor() {
       }
 
       // Force editor mode settings
-      config.type = 'desktop'
-      config.editorConfig.mode = 'edit'
+      editorConfig.type = 'desktop'
+      editorConfig.editorConfig.mode = 'edit'
 
       // Log the final config
-      console.log('Final OnlyOffice config:', JSON.stringify(config, null, 2))
+      console.log('Final OnlyOffice config:', JSON.stringify(editorConfig, null, 2))
 
-      console.log('OnlyOffice config from backend:', config)
+      console.log('OnlyOffice config from backend:', editorConfig)
 
-      docEditorRef.current = new window.DocsAPI.DocEditor('onlyoffice-editor', config)
+      docEditorRef.current = new window.DocsAPI.DocEditor('onlyoffice-editor', editorConfig)
     } catch (err: any) {
       console.error('Editor initialization error:', err)
       setError(`Failed to initialize editor: ${err.message}`)
