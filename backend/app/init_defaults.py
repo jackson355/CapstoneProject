@@ -174,7 +174,6 @@ def create_default_email_templates():
 <ul>
     <li>Quotation Number: {{quotation_number}}</li>
     <li>Date: {{current_date}}</li>
-    <li>Valid Until: {{due_date}}</li>
 </ul>
 
 <p>If you have any questions or would like to discuss this quotation further, please don't hesitate to contact us.</p>
