@@ -63,7 +63,7 @@ def create_default_email_settings():
             use_tls=True,
             use_ssl=False,
             sendgrid_api_key=None,
-            from_email='email',
+            from_email='email@gmail.com',
             from_name=None,
             reply_to=None,
             email_signature=None,
