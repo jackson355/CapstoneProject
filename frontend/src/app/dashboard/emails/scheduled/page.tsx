@@ -122,20 +122,25 @@ export default function ScheduledEmailsPage(): React.JSX.Element {
 
   const handleCreateEmail = async (): Promise<void> => {
     try {
+      // Convert local datetime to ISO string with timezone
+      const localDate = new Date(formData.scheduled_time);
+      const isoDateTime = localDate.toISOString();
+
       const emailData: any = {
         recipient_email: formData.recipient_email,
         subject: formData.subject,
         body: formData.body,
-        scheduled_time: formData.scheduled_time,
+        scheduled_time: isoDateTime,
         is_recurring: formData.is_recurring,
         trigger_type: 'manual',
       };
 
       if (formData.is_recurring) {
+        const endDate = formData.end_date ? new Date(formData.end_date).toISOString() : undefined;
         emailData.recurrence_pattern = {
           frequency: formData.frequency,
           interval: formData.interval,
-          end_date: formData.end_date || undefined,
+          end_date: endDate,
         };
       }
 

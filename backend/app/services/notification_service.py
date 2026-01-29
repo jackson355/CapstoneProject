@@ -178,7 +178,7 @@ class NotificationService:
             db=db,
             user_id=user_id,
             title="Email Scheduled",
-            message=f"Email to {recipient_email} scheduled for {scheduled_time.strftime('%Y-%m-%d %H:%M')}",
+            message=f"Email to {recipient_email} has been scheduled",
             notification_type="email_scheduled",
             related_type="scheduled_email",
             related_id=scheduled_email_id,

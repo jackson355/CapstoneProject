@@ -5,7 +5,7 @@ Creates: roles, superadmin user, email settings, and automation templates.
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from app.db.session import engine, SessionLocal
-from app.models import User, Role, EmailSettings, AutomationTemplate
+from app.models import User, Role, EmailSettings, AutomationTemplate, EmailTemplate
 from app.init_roles import create_default_roles
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -150,6 +150,97 @@ def create_default_automation_templates():
     finally:
         db.close()
 
+def create_default_email_templates():
+    """Create default email templates for quotation and invoice."""
+    db: Session = SessionLocal()
+    try:
+        # Get superadmin user for created_by field
+        superadmin = db.query(User).filter(User.email == "superadmin@gmail.com").first()
+        if not superadmin:
+            print("Superadmin not found. Skipping email templates creation.")
+            return
+
+        # Define default email templates
+        default_templates = [
+            {
+                'name': 'Quotation - Standard',
+                'template_type': 'quotation',
+                'subject': 'Quotation {{quotation_number}} from {{my_company_name}}',
+                'body': '''<p>Dear {{contact_name}},</p>
+
+<p>Thank you for your interest in our services. Please find attached our quotation <strong>{{quotation_number}}</strong> for your review.</p>
+
+<p><strong>Quotation Details:</strong></p>
+<ul>
+    <li>Quotation Number: {{quotation_number}}</li>
+    <li>Date: {{current_date}}</li>
+    <li>Valid Until: {{due_date}}</li>
+</ul>
+
+<p>If you have any questions or would like to discuss this quotation further, please don't hesitate to contact us.</p>
+
+<p>We look forward to the opportunity to work with you.</p>
+
+<p>Best regards,<br>
+{{my_company_name}}<br>
+{{my_company_email}}<br>
+{{my_company_phone}}</p>''',
+                'variables': ['{{quotation_number}}', '{{contact_name}}', '{{my_company_name}}', '{{my_company_email}}', '{{my_company_phone}}', '{{current_date}}', '{{due_date}}'],
+                'created_by': superadmin.id
+            },
+            {
+                'name': 'Invoice - Standard',
+                'template_type': 'invoice',
+                'subject': 'Invoice {{invoice_number}} from {{my_company_name}}',
+                'body': '''<p>Dear {{contact_name}},</p>
+
+<p>Please find attached invoice <strong>{{invoice_number}}</strong> for your records.</p>
+
+<p><strong>Invoice Details:</strong></p>
+<ul>
+    <li>Invoice Number: {{invoice_number}}</li>
+    <li>Date: {{current_date}}</li>
+    <li>Due Date: {{due_date}}</li>
+</ul>
+
+<p>Please ensure payment is made by the due date. If you have already made the payment, please disregard this message.</p>
+
+<p>If you have any questions regarding this invoice, please contact us.</p>
+
+<p>Thank you for your business.</p>
+
+<p>Best regards,<br>
+{{my_company_name}}<br>
+{{my_company_email}}<br>
+{{my_company_phone}}</p>''',
+                'variables': ['{{invoice_number}}', '{{contact_name}}', '{{my_company_name}}', '{{my_company_email}}', '{{my_company_phone}}', '{{current_date}}', '{{due_date}}'],
+                'created_by': superadmin.id
+            }
+        ]
+
+        created_count = 0
+        for template_data in default_templates:
+            # Check if template already exists by name
+            existing = db.query(EmailTemplate).filter(
+                EmailTemplate.name == template_data['name']
+            ).first()
+
+            if not existing:
+                template = EmailTemplate(**template_data)
+                db.add(template)
+                created_count += 1
+
+        if created_count > 0:
+            db.commit()
+            print(f"Created {created_count} default email templates.")
+        else:
+            print("All email templates already exist.")
+    except Exception as e:
+        print("Error creating email templates:", e)
+        db.rollback()
+    finally:
+        db.close()
+
 def init_all():
     """Initialize all default data."""
     print("=" * 50)
@@ -159,6 +250,7 @@ def init_all():
     create_superadmin()
     create_default_email_settings()
     create_default_automation_templates()
+    create_default_email_templates()
 
     print("=" * 50)
     print("Initialization complete!")

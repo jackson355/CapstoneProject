@@ -74,13 +74,6 @@ def create_email_template(
     db: Session = Depends(get_db)
 ):
     """Create a new email template"""
-    # If setting as default, unset other defaults of same type
-    if template_in.is_default:
-        db.query(EmailTemplate).filter(
-            EmailTemplate.template_type == template_in.template_type,
-            EmailTemplate.is_default == True
-        ).update({'is_default': False})
-
     template = EmailTemplate(
         **template_in.model_dump(),
         created_by=current_user.id
@@ -104,14 +97,6 @@ def update_email_template(
         raise HTTPException(status_code=404, detail="Email template not found")
 
     update_data = template_in.model_dump(exclude_unset=True)
-
-    # If setting as default, unset other defaults of same type
-    if update_data.get('is_default'):
-        db.query(EmailTemplate).filter(
-            EmailTemplate.template_type == template.template_type,
-            EmailTemplate.is_default == True,
-            EmailTemplate.id != template_id
-        ).update({'is_default': False})
 
     for field, value in update_data.items():
         setattr(template, field, value)
@@ -509,19 +494,6 @@ def delete_email_settings(
 
 
 # ==================== UTILITY ENDPOINTS ====================
-
-@router.get("/templates/{template_type}/default", response_model=EmailTemplateOut)
-def get_default_template(
-    template_type: str,
-    current_user: UserOut = Depends(require_admin_or_superadmin),
-    db: Session = Depends(get_db)
-):
-    """Get default email template for a type"""
-    template = EmailService.get_default_template(db, template_type)
-    if not template:
-        raise HTTPException(status_code=404, detail=f"No default template found for type '{template_type}'")
-    return template
-
 
 @router.post("/process-scheduled")
 def process_scheduled_emails_endpoint(

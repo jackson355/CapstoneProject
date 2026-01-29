@@ -432,15 +432,3 @@ class EmailService:
         db.refresh(email_history)
 
         return success, error_message, email_history.id
-
-    @staticmethod
-    def get_default_template(
-        db: Session,
-        template_type: str
-    ) -> Optional[EmailTemplate]:
-        """Get default email template for quotation or invoice"""
-        template = db.query(EmailTemplate).filter(
-            EmailTemplate.template_type == template_type,
-            EmailTemplate.is_default == True
-        ).first()
-        return template

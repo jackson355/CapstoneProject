@@ -14,13 +14,11 @@ import {
   DialogTitle,
   Divider,
   FormControl,
-  FormControlLabel,
   IconButton,
   InputLabel,
   MenuItem,
   Select,
   Stack,
-  Switch,
   TextField,
   Tooltip,
   Typography,
@@ -43,7 +41,6 @@ interface EmailTemplate {
   body: string;
   template_type: string;
   variables: string[];
-  is_default: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -86,7 +83,6 @@ export default function EmailTemplatesPage(): React.JSX.Element {
     subject: '',
     body: '',
     template_type: 'quotation' as 'quotation' | 'invoice' | 'general',
-    is_default: false,
   });
 
   React.useEffect(() => {
@@ -175,7 +171,6 @@ export default function EmailTemplatesPage(): React.JSX.Element {
       subject: '',
       body: '',
       template_type: 'quotation',
-      is_default: false,
     });
     setSelectedTemplate(null);
   };
@@ -187,7 +182,6 @@ export default function EmailTemplatesPage(): React.JSX.Element {
       subject: template.subject,
       body: template.body,
       template_type: template.template_type as 'quotation' | 'invoice' | 'general',
-      is_default: template.is_default,
     });
     setEditDialogOpen(true);
   };
@@ -285,14 +279,9 @@ export default function EmailTemplatesPage(): React.JSX.Element {
               <Card key={template.id}>
                 <CardContent>
                   <Stack spacing={2}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                      <Typography variant="h6" noWrap sx={{ flex: 1 }}>
-                        {template.name}
-                      </Typography>
-                      {template.is_default && (
-                        <Chip label="Default" color="primary" size="small" />
-                      )}
-                    </Stack>
+                    <Typography variant="h6" noWrap>
+                      {template.name}
+                    </Typography>
                     <Stack direction="row" spacing={1}>
                       <Chip label={template.template_type} size="small" color="secondary" />
                       <Chip label={`${template.variables.length} vars`} size="small" />
@@ -397,16 +386,6 @@ export default function EmailTemplatesPage(): React.JSX.Element {
                 value: v
               }))}
             />
-
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.is_default}
-                  onChange={(e) => setFormData({ ...formData, is_default: e.target.checked })}
-                />
-              }
-              label="Set as default template"
-            />
           </Stack>
         </DialogContent>
         <DialogActions>
@@ -463,16 +442,6 @@ export default function EmailTemplatesPage(): React.JSX.Element {
                 label: v.replace(/{{|}}/g, '').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
                 value: v
               }))}
-            />
-
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.is_default}
-                  onChange={(e) => setFormData({ ...formData, is_default: e.target.checked })}
-                />
-              }
-              label="Set as default template"
             />
           </Stack>
         </DialogContent>

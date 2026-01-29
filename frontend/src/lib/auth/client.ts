@@ -1485,7 +1485,6 @@ class AuthClient {
     body: string;
     template_type: string;
     variables?: string[];
-    is_default?: boolean;
   }): Promise<{ error?: string; data?: any }> {
     const token = localStorage.getItem('access_token');
     if (!token) return { error: 'Not authenticated' };
@@ -2077,31 +2076,6 @@ class AuthClient {
 
       if (!res.ok) {
         let message = 'Failed to update company settings';
-        try {
-          const err = await res.json();
-          message = err.detail || message;
-        } catch {}
-        return { error: message };
-      }
-
-      const data = await res.json();
-      return { data };
-    } catch {
-      return { error: 'Network error' };
-    }
-  }
-
-  async getDefaultEmailTemplate(template_type: string): Promise<{ error?: string; data?: any }> {
-    const token = localStorage.getItem('access_token');
-    if (!token) return { error: 'Not authenticated' };
-
-    try {
-      const res = await fetch(`${config.api.baseUrl}/emails/templates/${template_type}/default`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) {
-        let message = 'Failed to fetch default template';
         try {
           const err = await res.json();
           message = err.detail || message;
