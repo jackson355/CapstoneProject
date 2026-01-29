@@ -22,15 +22,15 @@ def create_superadmin():
             raise Exception("Superadmin role not found after role initialization")
 
         # Check if superadmin exists
-        superadmin = db.query(User).filter(User.email == "admin@gmail.com").first()
+        superadmin = db.query(User).filter(User.email == "superadmin@gmail.com").first()
         if superadmin:
             print("Superadmin already exists.")
             return
 
         # Create superadmin
         user = User(
-            name="admin",
-            email="admin@gmail.com",
+            name="superadmin",
+            email="superadmin@gmail.com",
             password=get_password_hash("P@ssw0rd")
         )
         user.role = superadmin_role
