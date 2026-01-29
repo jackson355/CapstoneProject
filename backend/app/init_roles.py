@@ -9,9 +9,9 @@ def create_default_roles():
     db: Session = SessionLocal()
     try:
         roles_to_create = [
-            {"name": "user"},
+            {"name": "superadmin"},
             {"name": "admin"}, 
-            {"name": "superadmin"}
+            {"name": "user"}
         ]
         
         for role_data in roles_to_create:
