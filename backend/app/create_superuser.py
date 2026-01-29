@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from app.db.session import engine, SessionLocal
-from app.models import User, Role
+from app.models import User, Role, EmailSettings
 from app.init_roles import create_default_roles
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -43,5 +43,42 @@ def create_superadmin():
     finally:
         db.close()
 
+def create_default_email_settings():
+    """Create default email settings if not exists."""
+    db: Session = SessionLocal()
+    try:
+        # Check if email settings already exist
+        existing_settings = db.query(EmailSettings).first()
+        if existing_settings:
+            print("Email settings already exist.")
+            return
+
+        # Create default email settings
+        email_settings = EmailSettings(
+            provider='smtp',
+            smtp_server=None,
+            smtp_port=None,
+            smtp_username=None,
+            smtp_password=None,
+            use_tls=True,
+            use_ssl=False,
+            sendgrid_api_key=None,
+            from_email='email',
+            from_name=None,
+            reply_to=None,
+            email_signature=None,
+            user_id=None,  # Organization-wide settings
+            is_active=True
+        )
+        db.add(email_settings)
+        db.commit()
+        print("Default email settings created successfully.")
+    except Exception as e:
+        print("Error creating email settings:", e)
+        db.rollback()
+    finally:
+        db.close()
+
 if __name__ == "__main__":
     create_superadmin()
+    create_default_email_settings()
