@@ -1,3 +1,7 @@
+"""
+Initialize default data for the application.
+Creates: roles, superadmin user, email settings, and automation templates.
+"""
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from app.db.session import engine, SessionLocal
@@ -10,10 +14,11 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 
 def create_superadmin():
+    """Create superadmin user if not exists."""
     # First, ensure all default roles exist
     print("Ensuring default roles exist...")
     create_default_roles()
-    
+
     db: Session = SessionLocal()
     try:
         # Get the superadmin role (should exist after create_default_roles)
@@ -56,18 +61,18 @@ def create_default_email_settings():
         # Create default email settings
         email_settings = EmailSettings(
             provider='smtp',
-            smtp_server='smtp.gmail.com',
-            smtp_port=587,
-            smtp_username='user@gmail.com',
-            smtp_password='password',
+            smtp_server=None,
+            smtp_port=None,
+            smtp_username=None,
+            smtp_password=None,
             use_tls=True,
             use_ssl=False,
             sendgrid_api_key=None,
-            from_email='email@gmail.com',
-            from_name='default',
-            reply_to='user@gmail.com',
+            from_email='email',
+            from_name=None,
+            reply_to=None,
             email_signature=None,
-            user_id=1,  # Organization-wide settings
+            user_id=None,  # Organization-wide settings
             is_active=True
         )
         db.add(email_settings)
@@ -145,7 +150,19 @@ def create_default_automation_templates():
     finally:
         db.close()
 
-if __name__ == "__main__":
+def init_all():
+    """Initialize all default data."""
+    print("=" * 50)
+    print("Initializing default data...")
+    print("=" * 50)
+
     create_superadmin()
     create_default_email_settings()
     create_default_automation_templates()
+
+    print("=" * 50)
+    print("Initialization complete!")
+    print("=" * 50)
+
+if __name__ == "__main__":
+    init_all()
