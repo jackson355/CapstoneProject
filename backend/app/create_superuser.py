@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from app.db.session import engine, SessionLocal
-from app.models import User, Role, EmailSettings
+from app.models import User, Role, EmailSettings, AutomationTemplate
 from app.init_roles import create_default_roles
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -79,6 +79,73 @@ def create_default_email_settings():
     finally:
         db.close()
 
+def create_default_automation_templates():
+    """Create default automation templates if not exists."""
+    db: Session = SessionLocal()
+    try:
+        # Define default templates
+        default_templates = [
+            {
+                'trigger_type': 'status_change',
+                'trigger_event': 'quotation_accepted',
+                'subject': 'Quotation {{quotation_number}} Accepted',
+                'body': '<p>Dear {{contact_name}},</p><p>Thanks for accepting our quotation {{quotation_number}}.</p><p>We will process your order and keep you updated on the progress.</p><p>If you have any questions, please don\'t hesitate to contact us.</p>',
+                'is_enabled': True
+            },
+            {
+                'trigger_type': 'status_change',
+                'trigger_event': 'quotation_rejected',
+                'subject': 'Quotation {{quotation_number}} Status Update',
+                'body': '<p>Dear {{contact_name}},</p><p>We received your response regarding quotation {{quotation_number}}.</p><p>We appreciate you taking the time to review our proposal. If you would like to discuss alternative options or have any feedback, please let us know.</p>',
+                'is_enabled': True
+            },
+            {
+                'trigger_type': 'status_change',
+                'trigger_event': 'invoice_paid',
+                'subject': 'Payment Received - Invoice {{invoice_number}}',
+                'body': '<p>Dear {{contact_name}},</p><p>Thank you for your payment on invoice {{invoice_number}}.</p><p>We have received your payment and your invoice has been marked as paid.</p><p>If you have any questions, please contact us.</p>',
+                'is_enabled': True
+            },
+            {
+                'trigger_type': 'deadline',
+                'trigger_event': 'quotation_deadline',
+                'subject': 'Reminder: Quotation {{quotation_number}} Expires Soon',
+                'body': '<p>Dear {{contact_name}},</p><p>This is a friendly reminder that quotation {{quotation_number}} will expire on {{due_date}}.</p><p>If you would like to proceed with this quotation, please let us know before the expiry date.</p>',
+                'is_enabled': True
+            },
+            {
+                'trigger_type': 'deadline',
+                'trigger_event': 'invoice_deadline',
+                'subject': 'Payment Reminder - Invoice {{invoice_number}} Due Soon',
+                'body': '<p>Dear {{contact_name}},</p><p>This is a friendly reminder that invoice {{invoice_number}} is due on {{due_date}}.</p><p>If you have already made the payment, please disregard this message.</p>',
+                'is_enabled': True
+            }
+        ]
+
+        created_count = 0
+        for template_data in default_templates:
+            # Check if template already exists
+            existing = db.query(AutomationTemplate).filter(
+                AutomationTemplate.trigger_event == template_data['trigger_event']
+            ).first()
+
+            if not existing:
+                template = AutomationTemplate(**template_data)
+                db.add(template)
+                created_count += 1
+
+        if created_count > 0:
+            db.commit()
+            print(f"Created {created_count} default automation templates.")
+        else:
+            print("All automation templates already exist.")
+    except Exception as e:
+        print("Error creating automation templates:", e)
+        db.rollback()
+    finally:
+        db.close()
+
 if __name__ == "__main__":
     create_superadmin()
     create_default_email_settings()
+    create_default_automation_templates()

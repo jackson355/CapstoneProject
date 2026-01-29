@@ -291,16 +291,88 @@ export default function EmailAutomationPage(): React.JSX.Element {
                 <Alert severity="info">
                   These emails are sent automatically when deadlines are approaching (7 days before due date)
                 </Alert>
-                {renderTemplateEditor(
-                  'quotation_deadline',
-                  'Quotation Deadline Reminder',
-                  'Sent 7 days before quotation due date'
-                )}
-                {renderTemplateEditor(
-                  'invoice_deadline',
-                  'Invoice Payment Reminder',
-                  'Sent 7 days before invoice payment due date'
-                )}
+
+                {/* Quotation Deadline Reminder */}
+                <Card variant="outlined">
+                  <CardContent>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                      <Box>
+                        <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
+                          Quotation Deadline Reminder
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Sent 7 days before quotation due date
+                        </Typography>
+                      </Box>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={templates['quotation_deadline']?.is_enabled ?? true}
+                            onChange={(e) => handleTemplateChange('quotation_deadline', 'is_enabled', e.target.checked)}
+                            color="primary"
+                          />
+                        }
+                        label={templates['quotation_deadline']?.is_enabled ? 'Enabled' : 'Disabled'}
+                        labelPlacement="start"
+                      />
+                    </Stack>
+                    {templates['quotation_deadline']?.is_enabled && (
+                      <WYSIWYGEmailEditor
+                        subject={templates['quotation_deadline']?.subject || ''}
+                        body={templates['quotation_deadline']?.body || ''}
+                        onSubjectChange={(value) => handleTemplateChange('quotation_deadline', 'subject', value)}
+                        onBodyChange={(value) => handleTemplateChange('quotation_deadline', 'body', value)}
+                        variables={{}}
+                        availableVariables={getAvailableVariables('quotation_deadline').map(v => ({
+                          key: v.replace(/{{|}}/g, ''),
+                          label: v.replace(/{{|}}/g, '').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+                          value: v
+                        }))}
+                      />
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Invoice Deadline Reminder */}
+                <Card variant="outlined">
+                  <CardContent>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                      <Box>
+                        <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
+                          Invoice Payment Reminder
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Sent 7 days before invoice payment due date
+                        </Typography>
+                      </Box>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={templates['invoice_deadline']?.is_enabled ?? true}
+                            onChange={(e) => handleTemplateChange('invoice_deadline', 'is_enabled', e.target.checked)}
+                            color="primary"
+                          />
+                        }
+                        label={templates['invoice_deadline']?.is_enabled ? 'Enabled' : 'Disabled'}
+                        labelPlacement="start"
+                      />
+                    </Stack>
+                    {templates['invoice_deadline']?.is_enabled && (
+                      <WYSIWYGEmailEditor
+                        subject={templates['invoice_deadline']?.subject || ''}
+                        body={templates['invoice_deadline']?.body || ''}
+                        onSubjectChange={(value) => handleTemplateChange('invoice_deadline', 'subject', value)}
+                        onBodyChange={(value) => handleTemplateChange('invoice_deadline', 'body', value)}
+                        variables={{}}
+                        availableVariables={getAvailableVariables('invoice_deadline').map(v => ({
+                          key: v.replace(/{{|}}/g, ''),
+                          label: v.replace(/{{|}}/g, '').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+                          value: v
+                        }))}
+                      />
+                    )}
+                  </CardContent>
+                </Card>
               </Stack>
             )}
           </CardContent>
