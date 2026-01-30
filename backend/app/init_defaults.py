@@ -61,18 +61,18 @@ def create_default_email_settings():
         # Create default email settings
         email_settings = EmailSettings(
             provider='smtp',
-            smtp_server=None,
-            smtp_port=None,
-            smtp_username=None,
-            smtp_password=None,
+            smtp_server='smtp.gmail.com',
+            smtp_port=587,
+            smtp_username='user@gmail.com',
+            smtp_password='password',
             use_tls=True,
             use_ssl=False,
             sendgrid_api_key=None,
-            from_email='email',
-            from_name=None,
-            reply_to=None,
+            from_email='email@gmail.com',
+            from_name='default',
+            reply_to='user@gmail.com',
             email_signature=None,
-            user_id=None,  # Organization-wide settings
+            user_id=1,  # Organization-wide settings
             is_active=True
         )
         db.add(email_settings)
