@@ -64,6 +64,8 @@ export default function Page(): React.JSX.Element {
           setCompanyName(companyResult.data.company_name || '');
           setCompanyEmail(companyResult.data.company_email || '');
           setCompanyPhone(companyResult.data.company_phone || '');
+          setCompanyAddress(companyResult.data.company_address || '');
+          setCompanyWebsite(companyResult.data.company_website || '');
         }
 
         // Fetch clients
