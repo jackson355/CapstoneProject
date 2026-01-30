@@ -52,6 +52,8 @@ services:
       - ./backend/.env
     ports:
       - "8000:8000"
+    volumes:
+      - backend_uploads:/app/uploads
     depends_on:
       - postgres
       - onlyoffice
@@ -70,3 +72,4 @@ volumes:
   pgadmin_data:
   onlyoffice_data:
   onlyoffice_logs:
+  backend_uploads:

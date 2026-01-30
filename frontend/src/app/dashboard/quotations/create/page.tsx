@@ -264,7 +264,7 @@ export default function Page(): React.JSX.Element {
                     {templates.map((template) => (
                       <MenuItem key={template.id} value={template.id}>
                         {template.name}
-                        {template.is_ai_enhanced && ' (AI Enhanced)'}
+                        {template.is_ai_enhanced && !template.name.includes('(AI Enhanced)') && ' (AI Enhanced)'}
                       </MenuItem>
                     ))}
                   </Select>
