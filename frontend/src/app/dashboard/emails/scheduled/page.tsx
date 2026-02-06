@@ -5,6 +5,7 @@ import {
   Box,
   Button,
   Card,
+  Checkbox,
   Chip,
   Dialog,
   DialogActions,
@@ -32,9 +33,9 @@ import {
   Alert,
 } from '@mui/material';
 import { Plus as PlusIcon } from '@phosphor-icons/react/dist/ssr/Plus';
-import { PencilSimple as EditIcon } from '@phosphor-icons/react/dist/ssr/PencilSimple';
 import { X as CancelIcon } from '@phosphor-icons/react/dist/ssr/X';
 import { Eye as EyeIcon } from '@phosphor-icons/react/dist/ssr/Eye';
+import { MagnifyingGlass as SearchIcon } from '@phosphor-icons/react/dist/ssr/MagnifyingGlass';
 import { authClient } from '@/lib/auth/client';
 import { logger } from '@/lib/default-logger';
 import { format } from 'date-fns';
@@ -43,6 +44,7 @@ import { WYSIWYGEmailEditor } from '@/components/dashboard/email/wysiwyg-email-e
 interface ScheduledEmail {
   id: number;
   recipient_email: string;
+  recipient_name?: string;
   subject: string;
   body: string;
   scheduled_time: string;
@@ -54,8 +56,46 @@ interface ScheduledEmail {
   };
   trigger_type: string;
   status: string;
-  quotation_number_snapshot?: string;
-  invoice_number_snapshot?: string;
+  document_number?: string;
+  document_type?: string;
+  quotation_id?: number;
+  invoice_id?: number;
+  attach_document?: boolean;
+}
+
+interface Quotation {
+  id: number;
+  quotation_number: string;
+  selected_contact: { name: string; email: string; phone?: string };
+  client: { company_name: string; address?: string };
+  status: string;
+  due_date?: string;
+}
+
+interface Invoice {
+  id: number;
+  invoice_number: string;
+  selected_contact: { name: string; email: string; phone?: string };
+  client: { company_name: string; address?: string };
+  status: string;
+  due_date?: string;
+}
+
+interface EmailTemplate {
+  id: number;
+  name: string;
+  subject: string;
+  body: string;
+  template_type: string;
+}
+
+interface CompanySettings {
+  id: number;
+  company_name: string;
+  company_email: string;
+  company_phone: string;
+  company_address: string;
+  company_website: string;
 }
 
 export default function ScheduledEmailsPage(): React.JSX.Element {
@@ -69,15 +109,27 @@ export default function ScheduledEmailsPage(): React.JSX.Element {
   // Filters
   const [triggerTypeFilter, setTriggerTypeFilter] = React.useState<string>('all');
   const [statusFilter, setStatusFilter] = React.useState<string>('pending');
+  const [searchQuery, setSearchQuery] = React.useState<string>('');
+  const [documentTypeFilter, setDocumentTypeFilter] = React.useState<string>('all');
 
   // Dialogs
   const [createDialogOpen, setCreateDialogOpen] = React.useState<boolean>(false);
   const [viewDialogOpen, setViewDialogOpen] = React.useState<boolean>(false);
   const [selectedEmail, setSelectedEmail] = React.useState<ScheduledEmail | null>(null);
 
+  // Data for create form
+  const [quotations, setQuotations] = React.useState<Quotation[]>([]);
+  const [invoices, setInvoices] = React.useState<Invoice[]>([]);
+  const [templates, setTemplates] = React.useState<EmailTemplate[]>([]);
+  const [companySettings, setCompanySettings] = React.useState<CompanySettings | null>(null);
+
   // Form state
   const [formData, setFormData] = React.useState({
+    document_type: '' as '' | 'quotation' | 'invoice',
+    document_id: '' as number | '',
+    template_id: '' as number | '',
     recipient_email: '',
+    recipient_name: '',
     subject: '',
     body: '',
     scheduled_time: '',
@@ -85,11 +137,18 @@ export default function ScheduledEmailsPage(): React.JSX.Element {
     frequency: 'daily',
     interval: 1,
     end_date: '',
+    attach_document: false,
   });
 
   React.useEffect(() => {
     fetchScheduledEmails();
-  }, [page, rowsPerPage, triggerTypeFilter, statusFilter]);
+  }, [page, rowsPerPage, triggerTypeFilter, statusFilter, searchQuery, documentTypeFilter]);
+
+  React.useEffect(() => {
+    if (createDialogOpen) {
+      fetchFormData();
+    }
+  }, [createDialogOpen, formData.document_type]);
 
   const fetchScheduledEmails = async (): Promise<void> => {
     try {
@@ -107,6 +166,14 @@ export default function ScheduledEmailsPage(): React.JSX.Element {
         params.status = statusFilter;
       }
 
+      if (searchQuery) {
+        params.search = searchQuery;
+      }
+
+      if (documentTypeFilter !== 'all') {
+        params.document_type = documentTypeFilter;
+      }
+
       const response = await authClient.getScheduledEmails(params);
       if (response.data) {
         setEmails(response.data.scheduled_emails || []);
@@ -120,20 +187,90 @@ export default function ScheduledEmailsPage(): React.JSX.Element {
     }
   };
 
+  const fetchFormData = async (): Promise<void> => {
+    try {
+      const [quotationsRes, invoicesRes, templatesRes, companyRes] = await Promise.all([
+        authClient.getQuotations({ page: 0, per_page: 100 }),
+        authClient.getInvoices({ page: 0, per_page: 100 }),
+        authClient.getEmailTemplates({ template_type: formData.document_type || undefined }),
+        authClient.getCompanySettings(),
+      ]);
+
+      setQuotations(quotationsRes.data?.quotations || []);
+      setInvoices(invoicesRes.data?.invoices || []);
+      setTemplates(templatesRes.data || []);
+      setCompanySettings(companyRes.data || null);
+    } catch (error) {
+      logger.error('Failed to fetch form data', error);
+    }
+  };
+
+  const handleDocumentChange = (documentId: number): void => {
+    setFormData((prev) => ({ ...prev, document_id: documentId }));
+
+    const selectedDocument =
+      formData.document_type === 'quotation'
+        ? quotations.find((q) => q.id === documentId)
+        : invoices.find((i) => i.id === documentId);
+
+    if (selectedDocument) {
+      setFormData((prev) => ({
+        ...prev,
+        document_id: documentId,
+        recipient_email: selectedDocument.selected_contact?.email || '',
+        recipient_name: selectedDocument.selected_contact?.name || '',
+      }));
+    }
+  };
+
+  const handleTemplateChange = (templateId: number): void => {
+    setFormData((prev) => ({ ...prev, template_id: templateId }));
+
+    const template = templates.find((t) => t.id === templateId);
+    if (template) {
+      setFormData((prev) => ({
+        ...prev,
+        template_id: templateId,
+        subject: template.subject,
+        body: template.body,
+      }));
+    }
+  };
+
   const handleCreateEmail = async (): Promise<void> => {
     try {
+      // Validate scheduled time is in the future
+      const scheduledDate = new Date(formData.scheduled_time);
+      if (scheduledDate <= new Date()) {
+        setMessage({ type: 'error', text: 'Scheduled time must be in the future' });
+        return;
+      }
+
       // Convert local datetime to ISO string with timezone
-      const localDate = new Date(formData.scheduled_time);
-      const isoDateTime = localDate.toISOString();
+      const isoDateTime = scheduledDate.toISOString();
 
       const emailData: any = {
         recipient_email: formData.recipient_email,
+        recipient_name: formData.recipient_name || undefined,
         subject: formData.subject,
         body: formData.body,
         scheduled_time: isoDateTime,
         is_recurring: formData.is_recurring,
         trigger_type: 'manual',
+        attach_document: formData.attach_document,
       };
+
+      // Add document reference
+      if (formData.document_type === 'quotation' && formData.document_id) {
+        emailData.quotation_id = formData.document_id;
+      } else if (formData.document_type === 'invoice' && formData.document_id) {
+        emailData.invoice_id = formData.document_id;
+      }
+
+      // Add template reference
+      if (formData.template_id) {
+        emailData.email_template_id = formData.template_id;
+      }
 
       if (formData.is_recurring) {
         const endDate = formData.end_date ? new Date(formData.end_date).toISOString() : undefined;
@@ -149,9 +286,10 @@ export default function ScheduledEmailsPage(): React.JSX.Element {
       setCreateDialogOpen(false);
       resetForm();
       fetchScheduledEmails();
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to create scheduled email', error);
-      setMessage({ type: 'error', text: 'Failed to create scheduled email' });
+      const errorMessage = error?.response?.data?.detail || 'Failed to create scheduled email';
+      setMessage({ type: 'error', text: errorMessage });
     }
   };
 
@@ -168,7 +306,11 @@ export default function ScheduledEmailsPage(): React.JSX.Element {
 
   const resetForm = (): void => {
     setFormData({
+      document_type: '',
+      document_id: '',
+      template_id: '',
       recipient_email: '',
+      recipient_name: '',
       subject: '',
       body: '',
       scheduled_time: '',
@@ -176,6 +318,7 @@ export default function ScheduledEmailsPage(): React.JSX.Element {
       frequency: 'daily',
       interval: 1,
       end_date: '',
+      attach_document: false,
     });
   };
 
@@ -184,6 +327,7 @@ export default function ScheduledEmailsPage(): React.JSX.Element {
       case 'sent':
         return 'success';
       case 'cancelled':
+      case 'failed':
         return 'error';
       default:
         return 'warning';
@@ -208,6 +352,69 @@ export default function ScheduledEmailsPage(): React.JSX.Element {
       return `Every ${email.recurrence_pattern.interval} ${email.recurrence_pattern.frequency}`;
     }
     return email.scheduled_time ? format(new Date(email.scheduled_time), 'MMM d, yyyy HH:mm') : 'N/A';
+  };
+
+  const currentDocuments = formData.document_type === 'quotation' ? quotations : formData.document_type === 'invoice' ? invoices : [];
+  const selectedDocument =
+    formData.document_type === 'quotation'
+      ? quotations.find((q) => q.id === formData.document_id)
+      : formData.document_type === 'invoice'
+        ? invoices.find((i) => i.id === formData.document_id)
+        : null;
+
+  // Build variables for template
+  const getTemplateVariables = () => {
+    if (!selectedDocument) return {};
+    return {
+      quotation_number: formData.document_type === 'quotation' ? (selectedDocument as Quotation)?.quotation_number || '' : '',
+      invoice_number: formData.document_type === 'invoice' ? (selectedDocument as Invoice)?.invoice_number || '' : '',
+      contact_name: selectedDocument?.selected_contact?.name || '',
+      contact_email: selectedDocument?.selected_contact?.email || '',
+      contact_phone: selectedDocument?.selected_contact?.phone || '',
+      client_company_name: selectedDocument?.client?.company_name || '',
+      client_address: selectedDocument?.client?.address || '',
+      my_company_name: companySettings?.company_name || '',
+      my_company_email: companySettings?.company_email || '',
+      my_company_phone: companySettings?.company_phone || '',
+      due_date: (() => {
+        const dueDate = formData.document_type === 'quotation' ? (selectedDocument as Quotation)?.due_date : (selectedDocument as Invoice)?.due_date;
+        return dueDate ? new Date(dueDate).toLocaleDateString('en-GB') : '';
+      })(),
+      current_date: new Date().toLocaleDateString('en-GB'),
+      quotation_status: formData.document_type === 'quotation' ? (selectedDocument as Quotation)?.status || '' : '',
+      invoice_status: formData.document_type === 'invoice' ? (selectedDocument as Invoice)?.status || '' : '',
+    };
+  };
+
+  const getAvailableVariables = () => {
+    if (!selectedDocument) return [];
+    return [
+      ...(formData.document_type === 'quotation'
+        ? [{ key: 'quotation_number', label: 'Quotation Number', value: (selectedDocument as Quotation)?.quotation_number || '' }]
+        : [{ key: 'invoice_number', label: 'Invoice Number', value: (selectedDocument as Invoice)?.invoice_number || '' }]
+      ),
+      { key: 'contact_name', label: 'Contact Name', value: selectedDocument?.selected_contact?.name || '' },
+      { key: 'contact_email', label: 'Contact Email', value: selectedDocument?.selected_contact?.email || '' },
+      { key: 'contact_phone', label: 'Contact Phone', value: selectedDocument?.selected_contact?.phone || '' },
+      { key: 'client_company_name', label: 'Client Company Name', value: selectedDocument?.client?.company_name || '' },
+      { key: 'client_address', label: 'Client Address', value: selectedDocument?.client?.address || '' },
+      { key: 'my_company_name', label: 'My Company Name', value: companySettings?.company_name || '' },
+      { key: 'my_company_email', label: 'My Company Email', value: companySettings?.company_email || '' },
+      { key: 'my_company_phone', label: 'My Company Phone', value: companySettings?.company_phone || '' },
+      {
+        key: 'due_date',
+        label: 'Due Date',
+        value: (() => {
+          const dueDate = formData.document_type === 'quotation' ? (selectedDocument as Quotation)?.due_date : (selectedDocument as Invoice)?.due_date;
+          return dueDate ? new Date(dueDate).toLocaleDateString('en-GB') : '';
+        })()
+      },
+      { key: 'current_date', label: 'Current Date', value: new Date().toLocaleDateString('en-GB') },
+      ...(formData.document_type === 'quotation'
+        ? [{ key: 'quotation_status', label: 'Quotation Status', value: (selectedDocument as Quotation)?.status || '' }]
+        : [{ key: 'invoice_status', label: 'Invoice Status', value: (selectedDocument as Invoice)?.status || '' }]
+      ),
+    ];
   };
 
   return (
@@ -236,7 +443,29 @@ export default function ScheduledEmailsPage(): React.JSX.Element {
         )}
 
         <Card sx={{ p: 2 }}>
-          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap>
+            <TextField
+              size="small"
+              placeholder="Search by email, subject, or document..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              InputProps={{
+                startAdornment: <SearchIcon style={{ marginRight: 8, color: '#666' }} />,
+              }}
+              sx={{ minWidth: 280 }}
+            />
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel>Document Type</InputLabel>
+              <Select
+                value={documentTypeFilter}
+                label="Document Type"
+                onChange={(e) => setDocumentTypeFilter(e.target.value)}
+              >
+                <MenuItem value="all">All Documents</MenuItem>
+                <MenuItem value="quotation">Quotation</MenuItem>
+                <MenuItem value="invoice">Invoice</MenuItem>
+              </Select>
+            </FormControl>
             <FormControl size="small" sx={{ minWidth: 150 }}>
               <InputLabel>Trigger Type</InputLabel>
               <Select
@@ -260,6 +489,7 @@ export default function ScheduledEmailsPage(): React.JSX.Element {
                 <MenuItem value="all">All Status</MenuItem>
                 <MenuItem value="pending">Pending</MenuItem>
                 <MenuItem value="sent">Sent</MenuItem>
+                <MenuItem value="failed">Failed</MenuItem>
                 <MenuItem value="cancelled">Cancelled</MenuItem>
               </Select>
             </FormControl>
@@ -274,6 +504,7 @@ export default function ScheduledEmailsPage(): React.JSX.Element {
                   <TableCell>Schedule</TableCell>
                   <TableCell>Recipient</TableCell>
                   <TableCell>Subject</TableCell>
+                  <TableCell>Document</TableCell>
                   <TableCell>Trigger</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell align="right">Actions</TableCell>
@@ -282,13 +513,13 @@ export default function ScheduledEmailsPage(): React.JSX.Element {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} align="center">
+                    <TableCell colSpan={7} align="center">
                       Loading...
                     </TableCell>
                   </TableRow>
                 ) : emails.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} align="center">
+                    <TableCell colSpan={7} align="center">
                       No scheduled emails found
                     </TableCell>
                   </TableRow>
@@ -296,16 +527,35 @@ export default function ScheduledEmailsPage(): React.JSX.Element {
                   emails.map((email) => (
                     <TableRow key={email.id} hover>
                       <TableCell>{getScheduleDisplay(email)}</TableCell>
-                      <TableCell>{email.recipient_email}</TableCell>
                       <TableCell>
-                        <Typography variant="body2" noWrap sx={{ maxWidth: 300 }}>
+                        <Typography variant="body2">{email.recipient_email}</Typography>
+                        {email.recipient_name && (
+                          <Typography variant="caption" color="text.secondary">
+                            {email.recipient_name}
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" noWrap sx={{ maxWidth: 250 }}>
                           {email.subject}
                         </Typography>
                       </TableCell>
                       <TableCell>
+                        {email.document_number ? (
+                          <Chip
+                            label={email.document_number}
+                            size="small"
+                            variant="outlined"
+                            color={email.document_type === 'quotation' ? 'primary' : 'secondary'}
+                          />
+                        ) : (
+                          <Typography variant="caption" color="text.secondary">-</Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <Chip
-                          label={email.trigger_type}
-                          color={getTriggerTypeColor(email.trigger_type)}
+                          label={email.trigger_type || 'manual'}
+                          color={getTriggerTypeColor(email.trigger_type || 'manual')}
                           size="small"
                         />
                       </TableCell>
@@ -373,33 +623,161 @@ export default function ScheduledEmailsPage(): React.JSX.Element {
         <Divider />
         <DialogContent>
           <Stack spacing={3} sx={{ mt: 1 }}>
-            <TextField
-              fullWidth
-              label="Recipient Email"
-              type="email"
-              value={formData.recipient_email}
-              onChange={(e) => setFormData({ ...formData, recipient_email: e.target.value })}
-              placeholder="client@example.com"
-              helperText="Email address of the recipient"
-            />
+            {/* Document Selection Section */}
+            <Typography variant="subtitle2" color="text.secondary">
+              Document Selection (Optional)
+            </Typography>
 
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
+              <FormControl fullWidth>
+                <InputLabel>Document Type</InputLabel>
+                <Select
+                  value={formData.document_type}
+                  label="Document Type"
+                  onChange={(e) => {
+                    setFormData({
+                      ...formData,
+                      document_type: e.target.value as '' | 'quotation' | 'invoice',
+                      document_id: '',
+                      template_id: '',
+                      recipient_email: '',
+                      recipient_name: '',
+                    });
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>No Document</em>
+                  </MenuItem>
+                  <MenuItem value="quotation">Quotation</MenuItem>
+                  <MenuItem value="invoice">Invoice</MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth disabled={!formData.document_type}>
+                <InputLabel>Select Document</InputLabel>
+                <Select
+                  value={formData.document_id}
+                  label="Select Document"
+                  onChange={(e) => handleDocumentChange(e.target.value as number)}
+                >
+                  <MenuItem value="">
+                    <em>Select a document</em>
+                  </MenuItem>
+                  {currentDocuments.map((doc: any) => (
+                    <MenuItem key={doc.id} value={doc.id}>
+                      {formData.document_type === 'quotation' ? doc.quotation_number : doc.invoice_number} -{' '}
+                      {doc.client?.company_name || 'Unknown Client'}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+
+            {selectedDocument && (
+              <Alert severity="success" icon={false}>
+                <Stack spacing={1}>
+                  <Typography variant="body2" fontWeight="medium">
+                    Document Selected
+                  </Typography>
+                  <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+                    <Typography variant="body2">
+                      <strong>Client:</strong> {selectedDocument.client?.company_name || 'Unknown'}
+                    </Typography>
+                    <Divider orientation="vertical" flexItem />
+                    <Typography variant="body2">
+                      <strong>Contact:</strong> {selectedDocument.selected_contact?.name || 'Unknown'}
+                    </Typography>
+                    <Divider orientation="vertical" flexItem />
+                    <Typography variant="body2">
+                      <strong>Email:</strong> {selectedDocument.selected_contact?.email || 'N/A'}
+                    </Typography>
+                  </Stack>
+                </Stack>
+              </Alert>
+            )}
+
+            <Divider />
+
+            {/* Email Template Selection */}
+            <FormControl fullWidth>
+              <InputLabel>Email Template (Optional)</InputLabel>
+              <Select
+                value={formData.template_id}
+                label="Email Template (Optional)"
+                onChange={(e) => handleTemplateChange(e.target.value as number)}
+              >
+                <MenuItem value="">
+                  <em>No Template</em>
+                </MenuItem>
+                {templates.map((template) => (
+                  <MenuItem key={template.id} value={template.id}>
+                    {template.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* Recipient */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
+              <TextField
+                fullWidth
+                label="Recipient Email *"
+                type="email"
+                value={formData.recipient_email}
+                onChange={(e) => setFormData({ ...formData, recipient_email: e.target.value })}
+                placeholder="client@example.com"
+                helperText={selectedDocument ? "Auto-filled from selected document" : "Enter recipient email"}
+              />
+              <TextField
+                fullWidth
+                label="Recipient Name"
+                value={formData.recipient_name}
+                onChange={(e) => setFormData({ ...formData, recipient_name: e.target.value })}
+                placeholder="John Doe"
+              />
+            </Box>
+
+            {/* Attach Document Checkbox */}
+            {formData.document_id && (
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={formData.attach_document}
+                    onChange={(e) => setFormData({ ...formData, attach_document: e.target.checked })}
+                  />
+                }
+                label="Attach Document (PDF/DOCX)"
+              />
+            )}
+
+            {/* WYSIWYG Email Editor */}
             <WYSIWYGEmailEditor
               subject={formData.subject}
               body={formData.body}
               onSubjectChange={(value) => setFormData({ ...formData, subject: value })}
               onBodyChange={(value) => setFormData({ ...formData, body: value })}
-              variables={{}}
-              availableVariables={[]}
+              variables={getTemplateVariables()}
+              availableVariables={getAvailableVariables()}
             />
+
+            <Divider />
+
+            {/* Scheduling Section */}
+            <Typography variant="subtitle2" color="text.secondary">
+              Scheduling Options
+            </Typography>
 
             <TextField
               fullWidth
               type="datetime-local"
-              label="Scheduled Time"
+              label="Scheduled Time *"
               value={formData.scheduled_time}
               onChange={(e) => setFormData({ ...formData, scheduled_time: e.target.value })}
               InputLabelProps={{ shrink: true }}
-              helperText="When this email should be sent"
+              helperText="When this email should be sent (must be in the future)"
+              inputProps={{
+                min: new Date().toISOString().slice(0, 16),
+              }}
             />
 
             <FormControlLabel
@@ -426,9 +804,6 @@ export default function ScheduledEmailsPage(): React.JSX.Element {
                       <MenuItem value="weekly">Weekly</MenuItem>
                       <MenuItem value="monthly">Monthly</MenuItem>
                     </Select>
-                    <Typography variant="caption" sx={{ mt: 0.5, color: 'text.secondary' }}>
-                      How often to repeat this email
-                    </Typography>
                   </FormControl>
 
                   <TextField
@@ -437,7 +812,7 @@ export default function ScheduledEmailsPage(): React.JSX.Element {
                     label="Interval"
                     value={formData.interval}
                     onChange={(e) =>
-                      setFormData({ ...formData, interval: parseInt(e.target.value) })
+                      setFormData({ ...formData, interval: parseInt(e.target.value) || 1 })
                     }
                     inputProps={{ min: 1 }}
                     helperText="Repeat every N days/weeks/months"
@@ -451,14 +826,14 @@ export default function ScheduledEmailsPage(): React.JSX.Element {
                   value={formData.end_date}
                   onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                   InputLabelProps={{ shrink: true }}
-                  helperText="When to stop sending recurring emails (leave empty for no end date)"
+                  helperText="When to stop sending recurring emails"
                 />
               </>
             )}
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => { setCreateDialogOpen(false); resetForm(); }}>Cancel</Button>
           <Button
             variant="contained"
             onClick={handleCreateEmail}
@@ -483,33 +858,56 @@ export default function ScheduledEmailsPage(): React.JSX.Element {
         <DialogContent>
           {selectedEmail && (
             <Stack spacing={2}>
-              <Box>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Recipient:
-                </Typography>
-                <Typography variant="body1">{selectedEmail.recipient_email}</Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Recipient:
+                  </Typography>
+                  <Typography variant="body1">{selectedEmail.recipient_email}</Typography>
+                  {selectedEmail.recipient_name && (
+                    <Typography variant="caption" color="text.secondary">
+                      {selectedEmail.recipient_name}
+                    </Typography>
+                  )}
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Schedule:
+                  </Typography>
+                  <Typography variant="body1">{getScheduleDisplay(selectedEmail)}</Typography>
+                </Box>
+              </Box>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Document:
+                  </Typography>
+                  {selectedEmail.document_number ? (
+                    <Chip
+                      label={`${selectedEmail.document_type}: ${selectedEmail.document_number}`}
+                      size="small"
+                      color={selectedEmail.document_type === 'quotation' ? 'primary' : 'secondary'}
+                    />
+                  ) : (
+                    <Typography variant="body2">No document attached</Typography>
+                  )}
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Status:
+                  </Typography>
+                  <Chip
+                    label={selectedEmail.status}
+                    color={getStatusColor(selectedEmail.status)}
+                    size="small"
+                  />
+                </Box>
               </Box>
               <Box>
                 <Typography variant="subtitle2" color="text.secondary">
                   Subject:
                 </Typography>
                 <Typography variant="body1">{selectedEmail.subject}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Schedule:
-                </Typography>
-                <Typography variant="body1">{getScheduleDisplay(selectedEmail)}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Status:
-                </Typography>
-                <Chip
-                  label={selectedEmail.status}
-                  color={getStatusColor(selectedEmail.status)}
-                  size="small"
-                />
               </Box>
               <Divider />
               <Box>

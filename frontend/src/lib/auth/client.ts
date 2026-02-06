@@ -1671,7 +1671,7 @@ class AuthClient {
   }
 
   // Scheduled Emails
-  async getScheduledEmails(params: { page?: number; per_page?: number; status?: string; trigger_type?: string } = {}): Promise<{ error?: string; data?: any }> {
+  async getScheduledEmails(params: { page?: number; per_page?: number; status?: string; trigger_type?: string; search?: string; document_type?: string; quotation_id?: number; invoice_id?: number } = {}): Promise<{ error?: string; data?: any }> {
     const token = localStorage.getItem('access_token');
     if (!token) return { error: 'Not authenticated' };
 
@@ -1681,6 +1681,10 @@ class AuthClient {
       if (params.per_page !== undefined) queryParams.set('per_page', String(params.per_page));
       if (params.status) queryParams.set('status', params.status);
       if (params.trigger_type) queryParams.set('trigger_type', params.trigger_type);
+      if (params.search) queryParams.set('search', params.search);
+      if (params.document_type) queryParams.set('document_type', params.document_type);
+      if (params.quotation_id) queryParams.set('quotation_id', String(params.quotation_id));
+      if (params.invoice_id) queryParams.set('invoice_id', String(params.invoice_id));
 
       const res = await fetch(`${config.api.baseUrl}/emails/scheduled?${queryParams.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },

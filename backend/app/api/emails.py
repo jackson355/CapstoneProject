@@ -235,6 +235,10 @@ def list_scheduled_emails(
     per_page: int = Query(default=10, ge=1, le=100),
     status: Optional[str] = Query(default=None),
     trigger_type: Optional[str] = Query(default=None),
+    quotation_id: Optional[int] = Query(default=None),
+    invoice_id: Optional[int] = Query(default=None),
+    document_type: Optional[str] = Query(default=None),
+    search: Optional[str] = Query(default=None),
     current_user: UserOut = Depends(require_admin_or_superadmin),
     db: Session = Depends(get_db)
 ):
@@ -246,6 +250,23 @@ def list_scheduled_emails(
 
     if trigger_type:
         query = query.filter(ScheduledEmail.trigger_type == trigger_type)
+
+    if quotation_id:
+        query = query.filter(ScheduledEmail.quotation_id == quotation_id)
+
+    if invoice_id:
+        query = query.filter(ScheduledEmail.invoice_id == invoice_id)
+
+    if document_type:
+        query = query.filter(ScheduledEmail.document_type == document_type)
+
+    if search:
+        # Search by recipient email, subject, or document number
+        query = query.filter(
+            (ScheduledEmail.recipient_email.ilike(f"%{search}%")) |
+            (ScheduledEmail.subject.ilike(f"%{search}%")) |
+            (ScheduledEmail.document_number.ilike(f"%{search}%"))
+        )
 
     total = query.count()
     scheduled_emails = query.order_by(ScheduledEmail.scheduled_time.desc()).offset(page * per_page).limit(per_page).all()
@@ -278,11 +299,37 @@ def create_scheduled_email(
     db: Session = Depends(get_db)
 ):
     """Schedule an email for later sending"""
+    # Validate scheduled_time is in the future
+    if scheduled_email_in.scheduled_time <= datetime.now(scheduled_email_in.scheduled_time.tzinfo):
+        raise HTTPException(status_code=400, detail="Scheduled time must be in the future")
+
+    # Initialize document snapshot fields
+    document_number = None
+    document_type = None
+
+    # Validate quotation exists and get document info
+    if scheduled_email_in.quotation_id:
+        quotation = db.query(Quotation).filter(Quotation.id == scheduled_email_in.quotation_id).first()
+        if not quotation:
+            raise HTTPException(status_code=404, detail="Quotation not found")
+        document_number = quotation.quotation_number
+        document_type = 'quotation'
+
+    # Validate invoice exists and get document info
+    if scheduled_email_in.invoice_id:
+        invoice = db.query(Invoice).filter(Invoice.id == scheduled_email_in.invoice_id).first()
+        if not invoice:
+            raise HTTPException(status_code=404, detail="Invoice not found")
+        document_number = invoice.invoice_number
+        document_type = 'invoice'
+
     # Use mode='json' to automatically convert datetime to ISO strings
     data = scheduled_email_in.model_dump(mode='json')
 
     scheduled_email = ScheduledEmail(
         **data,
+        document_number=document_number,
+        document_type=document_type,
         created_by=current_user.id
     )
     db.add(scheduled_email)

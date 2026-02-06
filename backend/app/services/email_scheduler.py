@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime, timedelta
 from typing import List, Optional
+from pathlib import Path
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 
@@ -68,7 +69,18 @@ class EmailScheduler:
                 # Get attachments
                 attachments = []
                 if scheduled_email.attachments:
-                    attachments = scheduled_email.attachments
+                    attachments = list(scheduled_email.attachments)
+
+                # Handle attach_document flag - automatically attach document file
+                if scheduled_email.attach_document:
+                    if scheduled_email.quotation_id:
+                        quotation = db.query(Quotation).filter(Quotation.id == scheduled_email.quotation_id).first()
+                        if quotation and quotation.file_path and Path(quotation.file_path).exists():
+                            attachments.append(quotation.file_path)
+                    elif scheduled_email.invoice_id:
+                        invoice = db.query(Invoice).filter(Invoice.id == scheduled_email.invoice_id).first()
+                        if invoice and invoice.file_path and Path(invoice.file_path).exists():
+                            attachments.append(invoice.file_path)
 
                 # Send email
                 success, error_message = EmailService.send_email(

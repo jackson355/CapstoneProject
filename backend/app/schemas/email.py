@@ -99,6 +99,7 @@ class ScheduledEmailBase(BaseModel):
     trigger_type: Optional[str] = None  # 'manual', 'deadline', 'status_change', 'reminder'
     trigger_config: Optional[TriggerConfig] = None
     attachments: Optional[List[str]] = None
+    attach_document: bool = False  # Whether to attach the quotation/invoice DOCX
 
 class ScheduledEmailCreate(ScheduledEmailBase):
     pass
@@ -113,6 +114,7 @@ class ScheduledEmailUpdate(BaseModel):
     recurrence_pattern: Optional[RecurrencePattern] = None
     status: Optional[str] = None
     attachments: Optional[List[str]] = None
+    attach_document: Optional[bool] = None
 
 class ScheduledEmailOut(BaseModel):
     id: int
@@ -135,6 +137,7 @@ class ScheduledEmailOut(BaseModel):
     next_send_at: Optional[datetime] = None
     error_message: Optional[str] = None
     attachments: Optional[List[str]] = None
+    attach_document: bool = False
     created_by: int
     created_at: datetime
     updated_at: datetime

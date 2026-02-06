@@ -305,6 +305,7 @@ class ScheduledEmail(Base):
 
     # Attachments
     attachments = Column(JSON, nullable=True)  # List of file paths to attach
+    attach_document = Column(Boolean, default=False)  # Whether to attach the quotation/invoice DOCX
 
     # Metadata
     created_by = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
