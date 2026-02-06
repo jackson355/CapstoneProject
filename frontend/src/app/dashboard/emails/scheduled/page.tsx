@@ -363,8 +363,8 @@ export default function ScheduledEmailsPage(): React.JSX.Element {
         : null;
 
   // Build variables for template
-  const getTemplateVariables = () => {
-    if (!selectedDocument) return {};
+  const getTemplateVariables = (): Record<string, string> => {
+    if (!selectedDocument) return {} as Record<string, string>;
     return {
       quotation_number: formData.document_type === 'quotation' ? (selectedDocument as Quotation)?.quotation_number || '' : '',
       invoice_number: formData.document_type === 'invoice' ? (selectedDocument as Invoice)?.invoice_number || '' : '',
@@ -386,7 +386,7 @@ export default function ScheduledEmailsPage(): React.JSX.Element {
     };
   };
 
-  const getAvailableVariables = () => {
+  const getAvailableVariables = (): { key: string; label: string; value: string }[] => {
     if (!selectedDocument) return [];
     return [
       ...(formData.document_type === 'quotation'
