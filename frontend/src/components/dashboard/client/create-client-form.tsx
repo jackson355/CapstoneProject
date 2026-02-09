@@ -69,7 +69,7 @@ export function CreateClientForm(): React.JSX.Element {
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
       if (!token) return;
       try {
-        const res = await fetch(`${config.api.baseUrl}/partners?page=0&per_page=100`, {
+        const res = await fetch(`${config.api.baseUrl}/partners/?page=0&per_page=100`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {

@@ -1032,7 +1032,7 @@ class AuthClient {
 
     try {
       const params = new URLSearchParams({ page: String(page), per_page: String(perPage) });
-      const res = await fetch(`${config.api.baseUrl}/clients?${params.toString()}`, {
+      const res = await fetch(`${config.api.baseUrl}/clients/?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -1061,7 +1061,7 @@ class AuthClient {
     try {
       const params = new URLSearchParams({ page: String(page), per_page: String(perPage) });
       if (search) params.set('search', search);
-      const res = await fetch(`${config.api.baseUrl}/partners?${params.toString()}`, {
+      const res = await fetch(`${config.api.baseUrl}/partners/?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

@@ -65,7 +65,7 @@ export function ClientsTable(): React.JSX.Element {
       const params = new URLSearchParams({ page: String(page), per_page: String(rowsPerPage) });
       if (search) params.set('search', search);
       if (industry) params.set('industry', industry); // NEW
-      const res = await fetch(`${config.api.baseUrl}/clients?${params.toString()}`, {
+      const res = await fetch(`${config.api.baseUrl}/clients/?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
