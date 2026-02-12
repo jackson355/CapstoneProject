@@ -695,6 +695,7 @@ async def apply_ai_suggestions(
 
         new_template_name = body.get("new_template_name")
         openai_api_key = body.get("openai_api_key")
+        ai_template_type = body.get("template_type")
 
         if not accepted_variables and not accepted_improvements:
             raise HTTPException(status_code=400, detail="No variables or improvements to apply")
@@ -758,7 +759,7 @@ async def apply_ai_suggestions(
             new_template_data = {
                 "name": new_template_name,
                 "description": f"AI-enhanced template from '{template.name}' - formatting preserved",
-                "template_type": template.template_type,
+                "template_type": ai_template_type or template.template_type,
                 "content": {
                     "type": "ai_enhanced",
                     "original_template_id": template_id,
@@ -792,6 +793,8 @@ async def apply_ai_suggestions(
             file_metadata = file_storage.save_docx_content(improved_file_content, template_id)
             template.variables = variable_definitions
             template.is_ai_enhanced = True
+            if ai_template_type:
+                template.template_type = ai_template_type
             template.updated_at = datetime.utcnow()
 
             # Update content to include AI modifications

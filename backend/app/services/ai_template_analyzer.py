@@ -84,7 +84,7 @@ class AITemplateAnalyzer:
             print(f"[DEBUG] Document text preview: {document_text[:500]}...")
 
             response = await client.chat.completions.create(
-                model="gpt-4o-mini",  # Use cost-effective mini model
+                model="gpt-4o-mini",  # Better instruction following & JSON output
                 messages=[
                     {
                         "role": "system",
@@ -96,15 +96,23 @@ class AITemplateAnalyzer:
                     }
                 ],
                 temperature=0.1,  # Low temperature for consistent results
-                max_tokens=4000,
+                max_tokens=16000,
                 response_format={"type": "json_object"}
             )
 
-            # Parse the response
+            # Check if response was truncated
+            finish_reason = response.choices[0].finish_reason
             result_text = response.choices[0].message.content
+            print(f"[DEBUG] AI finish_reason: {finish_reason}")
             print(f"[DEBUG] Raw AI response: {result_text}")
 
-            result_data = json.loads(result_text)
+            if finish_reason == "length":
+                # Response was truncated - try to salvage partial JSON
+                print("[AI ANALYZE] Warning: AI response was truncated, attempting to salvage partial result")
+                result_data = self._repair_truncated_json(result_text)
+            else:
+                result_data = json.loads(result_text)
+
             print(f"[DEBUG] Parsed AI response - Variables: {len(result_data.get('variables', []))}, Text Improvements: {len(result_data.get('text_improvements', []))}")
 
             # Log text improvements specifically
@@ -115,8 +123,49 @@ class AITemplateAnalyzer:
             # Convert to structured result
             return self._parse_ai_response(result_data, document_text)
 
+        except json.JSONDecodeError as e:
+            raise Exception(f"AI analysis failed: AI returned invalid JSON - {str(e)}")
         except Exception as e:
             raise Exception(f"AI analysis failed: {str(e)}")
+
+    def _repair_truncated_json(self, text: str) -> dict:
+        """Attempt to repair truncated JSON by closing open structures."""
+        # Try to find the last complete array entry by trimming incomplete trailing data
+        # Strategy: remove the last incomplete item, then close all open brackets/braces
+
+        # First, try parsing as-is (maybe it's actually valid)
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            pass
+
+        # Remove the last incomplete object/value (everything after the last complete item)
+        # Look for the last complete object in an array (ends with })
+        repaired = text.rstrip()
+
+        # Remove trailing incomplete value (e.g. `"original_text": ` or `"original_text": "partial...`)
+        # Trim back to the last complete JSON object boundary
+        last_complete = repaired.rfind('},')
+        if last_complete == -1:
+            last_complete = repaired.rfind('}]')
+        if last_complete != -1:
+            repaired = repaired[:last_complete + 1]
+
+        # Count open brackets and braces, then close them
+        open_braces = repaired.count('{') - repaired.count('}')
+        open_brackets = repaired.count('[') - repaired.count(']')
+
+        repaired += ']' * max(0, open_brackets)
+        repaired += '}' * max(0, open_braces)
+
+        try:
+            result = json.loads(repaired)
+            print(f"[AI ANALYZE] Successfully repaired truncated JSON")
+            return result
+        except json.JSONDecodeError:
+            raise json.JSONDecodeError(
+                "Could not repair truncated AI response", repaired, 0
+            )
 
     def _get_system_prompt(self) -> str:
         """Get the system prompt for AI analysis"""
@@ -152,6 +201,15 @@ You must respond with valid JSON in this exact format:
       "description": "My company name",
       "type": "text",
       "context": "The service provider company name",
+      "confidence": 0.9
+    },
+    {
+      "name": "client_name",
+      "original_text": "John Doe",
+      "suggested_placeholder": "{{client_name}}",
+      "description": "Client contact person name",
+      "type": "text",
+      "context": "The client contact person",
       "confidence": 0.9
     },
     {
@@ -227,15 +285,44 @@ ANALYSIS REQUIREMENTS:
 6. Provide helpful suggestions for making the template more reusable
 
 VARIABLE IDENTIFICATION GUIDELINES:
-- Client company/organization names (use client_company_name, client_address, etc.)
-- My company details (use my_company_name, my_company_address, my_company_phone, etc.)
-- Person names and titles (both client and my company contacts)
-- Dates (specific dates that would change per use)
+When the detected content matches one of the standard placeholders below, you MUST use the exact standard name.
+For anything else (e.g. monetary amounts, project descriptions, reference numbers, quantities), suggest a descriptive placeholder name using lowercase_underscore format.
+
+STANDARD PLACEHOLDERS (use these exact names when content matches):
+  Client info:
+    {{client_company_name}} - Client company/organization name
+    {{client_uen}} - Client UEN number
+    {{client_industry}} - Client industry
+    {{client_address}} - Client address
+    {{client_postal_code}} - Client postal code
+  Client contact person:
+    {{client_name}} - Client contact person name
+    {{client_phone}} - Client contact phone number
+    {{client_email}} - Client contact email address
+  My company info:
+    {{my_company_name}} - Your company name
+    {{my_company_email}} - Your company email
+    {{my_company_phone}} - Your company phone
+    {{my_company_address}} - Your company address
+    {{my_company_website}} - Your company website
+  Document info:
+    {{quotation_number}} - Quotation reference number
+    {{quotation_status}} - Quotation status
+    {{invoice_number}} - Invoice reference number
+    {{invoice_status}} - Invoice status
+    {{due_date}} - Payment due date
+  Dates:
+    {{current_date}} - Current date (DD/MM/YYYY)
+    {{quotation_date}} - Quotation date
+    {{invoice_date}} - Invoice date
+    {{date}} - Generic date placeholder
+
+OTHER CONTENT TO LOOK FOR (use descriptive names):
 - Monetary amounts and prices
-- Addresses and contact information (differentiate between client and my company)
 - Project/service descriptions that vary
 - Reference numbers and IDs
 - Quantities and measurements
+- Any other text that would change between different uses
 
 TEXT IMPROVEMENT GUIDELINES:
 - Fix ALL spelling errors and typos (e.g., "pricexx" → "prices", "tessufinhaoilfnas" → remove or fix)

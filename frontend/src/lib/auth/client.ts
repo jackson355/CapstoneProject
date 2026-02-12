@@ -637,6 +637,7 @@ class AuthClient {
     options: {
       newTemplateName?: string;
       openaiApiKey?: string;
+      templateType?: string;
     } = {}
   ): Promise<{ error?: string; data?: any }> {
     const token = localStorage.getItem('access_token');
@@ -651,7 +652,8 @@ class AuthClient {
         payload = {
           accepted_variables: changes,
           new_template_name: options.newTemplateName,
-          openai_api_key: options.openaiApiKey
+          openai_api_key: options.openaiApiKey,
+          template_type: options.templateType
         };
       } else {
         // New format - both variables and improvements
@@ -659,7 +661,8 @@ class AuthClient {
           variables: changes.variables || [],
           improvements: changes.improvements || [],
           new_template_name: options.newTemplateName,
-          openai_api_key: options.openaiApiKey
+          openai_api_key: options.openaiApiKey,
+          template_type: options.templateType
         };
       }
 
@@ -1032,7 +1035,7 @@ class AuthClient {
 
     try {
       const params = new URLSearchParams({ page: String(page), per_page: String(perPage) });
-      const res = await fetch(`${config.api.baseUrl}/clients?${params.toString()}`, {
+      const res = await fetch(`${config.api.baseUrl}/clients/?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -1061,7 +1064,7 @@ class AuthClient {
     try {
       const params = new URLSearchParams({ page: String(page), per_page: String(perPage) });
       if (search) params.set('search', search);
-      const res = await fetch(`${config.api.baseUrl}/partners?${params.toString()}`, {
+      const res = await fetch(`${config.api.baseUrl}/partners/?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

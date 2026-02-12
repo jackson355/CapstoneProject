@@ -94,35 +94,35 @@ def create_default_automation_templates():
                 'trigger_type': 'status_change',
                 'trigger_event': 'quotation_accepted',
                 'subject': 'Quotation {{quotation_number}} Accepted',
-                'body': '<p>Dear {{contact_name}},</p><p>Thanks for accepting our quotation {{quotation_number}}.</p><p>We will process your order and keep you updated on the progress.</p><p>If you have any questions, please don\'t hesitate to contact us.</p>',
+                'body': '<p>Dear {{client_name}},</p><p>Thanks for accepting our quotation {{quotation_number}}.</p><p>We will process your order and keep you updated on the progress.</p><p>If you have any questions, please don\'t hesitate to contact us.</p>',
                 'is_enabled': True
             },
             {
                 'trigger_type': 'status_change',
                 'trigger_event': 'quotation_rejected',
                 'subject': 'Quotation {{quotation_number}} Status Update',
-                'body': '<p>Dear {{contact_name}},</p><p>We received your response regarding quotation {{quotation_number}}.</p><p>We appreciate you taking the time to review our proposal. If you would like to discuss alternative options or have any feedback, please let us know.</p>',
+                'body': '<p>Dear {{client_name}},</p><p>We received your response regarding quotation {{quotation_number}}.</p><p>We appreciate you taking the time to review our proposal. If you would like to discuss alternative options or have any feedback, please let us know.</p>',
                 'is_enabled': True
             },
             {
                 'trigger_type': 'status_change',
                 'trigger_event': 'invoice_paid',
                 'subject': 'Payment Received - Invoice {{invoice_number}}',
-                'body': '<p>Dear {{contact_name}},</p><p>Thank you for your payment on invoice {{invoice_number}}.</p><p>We have received your payment and your invoice has been marked as paid.</p><p>If you have any questions, please contact us.</p>',
+                'body': '<p>Dear {{client_name}},</p><p>Thank you for your payment on invoice {{invoice_number}}.</p><p>We have received your payment and your invoice has been marked as paid.</p><p>If you have any questions, please contact us.</p>',
                 'is_enabled': True
             },
             {
                 'trigger_type': 'deadline',
                 'trigger_event': 'quotation_deadline',
                 'subject': 'Reminder: Quotation {{quotation_number}} Expires Soon',
-                'body': '<p>Dear {{contact_name}},</p><p>This is a friendly reminder that quotation {{quotation_number}} will expire on {{due_date}}.</p><p>If you would like to proceed with this quotation, please let us know before the expiry date.</p>',
+                'body': '<p>Dear {{client_name}},</p><p>This is a friendly reminder that quotation {{quotation_number}} will expire on {{due_date}}.</p><p>If you would like to proceed with this quotation, please let us know before the expiry date.</p>',
                 'is_enabled': True
             },
             {
                 'trigger_type': 'deadline',
                 'trigger_event': 'invoice_deadline',
                 'subject': 'Payment Reminder - Invoice {{invoice_number}} Due Soon',
-                'body': '<p>Dear {{contact_name}},</p><p>This is a friendly reminder that invoice {{invoice_number}} is due on {{due_date}}.</p><p>If you have already made the payment, please disregard this message.</p>',
+                'body': '<p>Dear {{client_name}},</p><p>This is a friendly reminder that invoice {{invoice_number}} is due on {{due_date}}.</p><p>If you have already made the payment, please disregard this message.</p>',
                 'is_enabled': True
             }
         ]
@@ -166,7 +166,7 @@ def create_default_email_templates():
                 'name': 'Quotation - Standard',
                 'template_type': 'quotation',
                 'subject': 'Quotation {{quotation_number}} from {{my_company_name}}',
-                'body': '''<p>Dear {{contact_name}},</p>
+                'body': '''<p>Dear {{client_name}},</p>
 
 <p>Thank you for your interest in our services. Please find attached our quotation <strong>{{quotation_number}}</strong> for your review.</p>
 
@@ -184,14 +184,14 @@ def create_default_email_templates():
 {{my_company_name}}<br>
 {{my_company_email}}<br>
 {{my_company_phone}}</p>''',
-                'variables': ['{{quotation_number}}', '{{contact_name}}', '{{my_company_name}}', '{{my_company_email}}', '{{my_company_phone}}', '{{current_date}}', '{{due_date}}'],
+                'variables': ['{{quotation_number}}', '{{client_name}}', '{{my_company_name}}', '{{my_company_email}}', '{{my_company_phone}}', '{{current_date}}', '{{due_date}}'],
                 'created_by': superadmin.id
             },
             {
                 'name': 'Invoice - Standard',
                 'template_type': 'invoice',
                 'subject': 'Invoice {{invoice_number}} from {{my_company_name}}',
-                'body': '''<p>Dear {{contact_name}},</p>
+                'body': '''<p>Dear {{client_name}},</p>
 
 <p>Please find attached invoice <strong>{{invoice_number}}</strong> for your records.</p>
 
@@ -212,7 +212,7 @@ def create_default_email_templates():
 {{my_company_name}}<br>
 {{my_company_email}}<br>
 {{my_company_phone}}</p>''',
-                'variables': ['{{invoice_number}}', '{{contact_name}}', '{{my_company_name}}', '{{my_company_email}}', '{{my_company_phone}}', '{{current_date}}', '{{due_date}}'],
+                'variables': ['{{invoice_number}}', '{{client_name}}', '{{my_company_name}}', '{{my_company_email}}', '{{my_company_phone}}', '{{current_date}}', '{{due_date}}'],
                 'created_by': superadmin.id
             }
         ]

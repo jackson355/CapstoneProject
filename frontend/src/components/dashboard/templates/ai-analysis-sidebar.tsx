@@ -246,7 +246,8 @@ export const AIAnalysisSidebar = React.memo(function AIAnalysisSidebar({
         templateId,
         { variables: acceptedVariables, improvements: acceptedImprovements },
         {
-          newTemplateName: newTemplateName.trim() || undefined
+          newTemplateName: newTemplateName.trim() || undefined,
+          templateType: analysisResult.template_type
         }
       );
 

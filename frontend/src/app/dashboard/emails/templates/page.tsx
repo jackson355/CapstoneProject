@@ -48,9 +48,9 @@ interface EmailTemplate {
 const AVAILABLE_VARIABLES = [
   '{{quotation_number}}',
   '{{invoice_number}}',
-  '{{contact_name}}',
-  '{{contact_email}}',
-  '{{contact_phone}}',
+  '{{client_name}}',
+  '{{client_email}}',
+  '{{client_phone}}',
   '{{client_company_name}}',
   '{{client_address}}',
   '{{my_company_name}}',

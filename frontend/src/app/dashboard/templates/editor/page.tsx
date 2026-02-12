@@ -3,9 +3,10 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Box, CircularProgress, Alert, Button } from '@mui/material'
-import { ArrowBack } from '@mui/icons-material'
+import { ArrowBack, DataObject as PlaceholderIcon } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { config } from '@/config'
+import { PlaceholderSidebar } from '@/components/dashboard/templates/placeholder-sidebar'
 
 export default function OnlyOfficeEditor() {
   const searchParams = useSearchParams()
@@ -16,6 +17,7 @@ export default function OnlyOfficeEditor() {
   const docEditorRef = useRef<any>(null)
   const [retryCount, setRetryCount] = useState(0)
   const [isRetrying, setIsRetrying] = useState(false)
+  const [showPlaceholders, setShowPlaceholders] = useState(false)
 
   // Get parameters from URL
   const documentId = searchParams.get('id')
@@ -176,9 +178,17 @@ export default function OnlyOfficeEditor() {
 
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+      <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Button startIcon={<ArrowBack />} onClick={handleBack} size="small">
           Back to Templates
+        </Button>
+        <Button
+          startIcon={<PlaceholderIcon />}
+          onClick={() => setShowPlaceholders((prev) => !prev)}
+          size="small"
+          variant={showPlaceholders ? 'contained' : 'outlined'}
+        >
+          Placeholders
         </Button>
       </Box>
 
@@ -201,6 +211,12 @@ export default function OnlyOfficeEditor() {
         id="onlyoffice-editor"
         ref={editorRef}
         sx={{ flex: 1, width: '100%', height: '100%' }}
+      />
+
+      <PlaceholderSidebar
+        open={showPlaceholders}
+        onClose={() => setShowPlaceholders(false)}
+        templateId={documentId}
       />
     </Box>
   )

@@ -390,12 +390,7 @@ export default function Page(): React.JSX.Element {
                   Contact Person:
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {'{{'}<strong>contact_name</strong>{'}},'} {'{{'}<strong>contact_phone</strong>{'}},'} {'{{'}<strong>contact_email</strong>{'}}'}
-                  <br />
                   {'{{'}<strong>client_name</strong>{'}},'} {'{{'}<strong>client_phone</strong>{'}},'} {'{{'}<strong>client_email</strong>{'}}'}
-                  <Typography component="span" variant="caption" sx={{ fontStyle: 'italic', ml: 0.5 }}>
-                    (aliases for contact info)
-                  </Typography>
                 </Typography>
               </Stack>
 

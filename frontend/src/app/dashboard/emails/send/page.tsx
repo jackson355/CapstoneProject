@@ -358,9 +358,9 @@ export default function SendEmailPage(): React.JSX.Element {
             variables={{
               quotation_number: documentType === 'quotation' ? (selectedDocument as Quotation)?.quotation_number || '' : '',
               invoice_number: documentType === 'invoice' ? (selectedDocument as Invoice)?.invoice_number || '' : '',
-              contact_name: selectedDocument?.selected_contact?.name || '',
-              contact_email: selectedDocument?.selected_contact?.email || '',
-              contact_phone: selectedDocument?.selected_contact?.phone || '',
+              client_name: selectedDocument?.selected_contact?.name || '',
+              client_email: selectedDocument?.selected_contact?.email || '',
+              client_phone: selectedDocument?.selected_contact?.phone || '',
               client_company_name: selectedDocument?.client?.company_name || '',
               client_address: selectedDocument?.client?.address || '',
               my_company_name: companySettings?.company_name || '',
@@ -379,9 +379,9 @@ export default function SendEmailPage(): React.JSX.Element {
                 ? [{ key: 'quotation_number', label: 'Quotation Number', value: (selectedDocument as Quotation)?.quotation_number || '' }]
                 : [{ key: 'invoice_number', label: 'Invoice Number', value: (selectedDocument as Invoice)?.invoice_number || '' }]
               ),
-              { key: 'contact_name', label: 'Contact Name', value: selectedDocument?.selected_contact?.name || '' },
-              { key: 'contact_email', label: 'Contact Email', value: selectedDocument?.selected_contact?.email || '' },
-              { key: 'contact_phone', label: 'Contact Phone', value: selectedDocument?.selected_contact?.phone || '' },
+              { key: 'client_name', label: 'Client Name', value: selectedDocument?.selected_contact?.name || '' },
+              { key: 'client_email', label: 'Client Email', value: selectedDocument?.selected_contact?.email || '' },
+              { key: 'client_phone', label: 'Client Phone', value: selectedDocument?.selected_contact?.phone || '' },
               { key: 'client_company_name', label: 'Client Company Name', value: selectedDocument?.client?.company_name || '' },
               { key: 'client_address', label: 'Client Address', value: selectedDocument?.client?.address || '' },
               { key: 'my_company_name', label: 'My Company Name', value: companySettings?.company_name || '' },

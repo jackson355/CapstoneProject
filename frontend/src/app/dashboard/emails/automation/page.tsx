@@ -43,7 +43,7 @@ const defaultTemplates: Record<string, AutomationTemplate> = {
     subject: 'Quotation {{quotation_number}} Accepted',
     body: `<html>
 <body>
-  <p>Dear {{contact_name}},</p>
+  <p>Dear {{client_name}},</p>
   <p>Thank you! Your quotation <strong>{{quotation_number}}</strong> has been accepted.</p>
   <p>We will proceed with the next steps shortly.</p>
   <br>
@@ -58,7 +58,7 @@ const defaultTemplates: Record<string, AutomationTemplate> = {
     subject: 'Quotation {{quotation_number}} Status Update',
     body: `<html>
 <body>
-  <p>Dear {{contact_name}},</p>
+  <p>Dear {{client_name}},</p>
   <p>Your quotation <strong>{{quotation_number}}</strong> has been marked as rejected.</p>
   <p>Please contact us if you have any questions.</p>
   <br>
@@ -73,7 +73,7 @@ const defaultTemplates: Record<string, AutomationTemplate> = {
     subject: 'Payment Received: Invoice {{invoice_number}}',
     body: `<html>
 <body>
-  <p>Dear {{contact_name}},</p>
+  <p>Dear {{client_name}},</p>
   <p>Thank you! We have received your payment for invoice <strong>{{invoice_number}}</strong>.</p>
   <p>Your payment has been processed successfully.</p>
   <br>
@@ -88,7 +88,7 @@ const defaultTemplates: Record<string, AutomationTemplate> = {
     subject: 'Reminder: Quotation {{quotation_number}} Due Soon',
     body: `<html>
 <body>
-  <p>Dear {{contact_name}},</p>
+  <p>Dear {{client_name}},</p>
   <p>This is a friendly reminder that your quotation <strong>{{quotation_number}}</strong> is due soon.</p>
   <p><strong>Due Date:</strong> {{due_date}}</p>
   <p>Please review and respond at your earliest convenience.</p>
@@ -104,7 +104,7 @@ const defaultTemplates: Record<string, AutomationTemplate> = {
     subject: 'Payment Reminder: Invoice {{invoice_number}} Due Soon',
     body: `<html>
 <body>
-  <p>Dear {{contact_name}},</p>
+  <p>Dear {{client_name}},</p>
   <p>This is a reminder that your invoice <strong>{{invoice_number}}</strong> payment is due soon.</p>
   <p><strong>Due Date:</strong> {{due_date}}</p>
   <p>Please arrange payment at your earliest convenience.</p>
@@ -181,11 +181,11 @@ export default function EmailAutomationPage(): React.JSX.Element {
 
   const getAvailableVariables = (triggerEvent: string): string[] => {
     if (triggerEvent.startsWith('quotation')) {
-      return ['{{quotation_number}}', '{{contact_name}}', '{{client_name}}', '{{due_date}}', '{{my_company_name}}'];
+      return ['{{quotation_number}}', '{{client_name}}', '{{due_date}}', '{{my_company_name}}'];
     } else if (triggerEvent.startsWith('invoice')) {
-      return ['{{invoice_number}}', '{{contact_name}}', '{{client_name}}', '{{due_date}}', '{{my_company_name}}'];
+      return ['{{invoice_number}}', '{{client_name}}', '{{due_date}}', '{{my_company_name}}'];
     }
-    return ['{{contact_name}}', '{{my_company_name}}'];
+    return ['{{client_name}}', '{{my_company_name}}'];
   };
 
   const renderTemplateEditor = (key: string, title: string, description: string) => {
