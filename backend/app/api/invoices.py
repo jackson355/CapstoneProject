@@ -30,24 +30,37 @@ def require_admin_or_superadmin(current_user: UserOut = Depends(get_current_user
     return current_user
 
 
-def generate_invoice_number(db: Session) -> str:
-    """Generate a unique invoice number like INV-2025-0001"""
-    current_year = datetime.now().year
-    prefix = f"INV-{current_year}-"
+def generate_invoice_number(db: Session, quotation: Quotation) -> str:
+    """Generate an invoice number derived from its quotation number.
 
-    # Find the latest invoice number for this year
-    latest = db.query(Invoice).filter(
-        Invoice.invoice_number.like(f"{prefix}%")
-    ).order_by(Invoice.invoice_number.desc()).first()
+    New format: I{YYYY}{MM}{NNN}{suffix}-{n}
+    - Replace the leading Q with I
+    - Append -1, -2, ... for each subsequent invoice from the same quotation
 
-    if latest:
-        # Extract the number part and increment
-        last_number = int(latest.invoice_number.split('-')[-1])
-        new_number = last_number + 1
+    Falls back to INV-{year}-{seq} for old-format quotation numbers.
+    """
+    quot_num = quotation.quotation_number
+
+    if quot_num.startswith('Q') and len(quot_num) >= 10:
+        # New format: swap type prefix, derive base, then append counter
+        base = 'I' + quot_num[1:]  # e.g. I202510035IIL
+        existing_count = db.query(Invoice).filter(
+            Invoice.quotation_id == quotation.id
+        ).count()
+        return f"{base}-{existing_count + 1}"
     else:
-        new_number = 1
-
-    return f"{prefix}{new_number:04d}"
+        # Legacy fallback for old Q-YYYY-NNNN format
+        current_year = datetime.now().year
+        prefix = f"INV-{current_year}-"
+        latest = db.query(Invoice).filter(
+            Invoice.invoice_number.like(f"{prefix}%")
+        ).order_by(Invoice.invoice_number.desc()).first()
+        if latest:
+            last_number = int(latest.invoice_number.split('-')[-1])
+            new_number = last_number + 1
+        else:
+            new_number = 1
+        return f"{prefix}{new_number:04d}"
 
 
 @router.get("/", response_model=PaginatedInvoicesResponse)
@@ -132,8 +145,8 @@ def create_invoice(
     if not template.file_path or not file_storage.file_exists(template.id):
         raise HTTPException(status_code=400, detail="Template file not found")
 
-    # Generate invoice number
-    invoice_number = generate_invoice_number(db)
+    # Generate invoice number derived from the linked quotation
+    invoice_number = generate_invoice_number(db, quotation)
 
     # Create invoice record - copy data from quotation
     invoice_data = {

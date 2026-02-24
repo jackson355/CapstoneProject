@@ -30,24 +30,35 @@ def require_admin_or_superadmin(current_user: UserOut = Depends(get_current_user
     return current_user
 
 
-def generate_quotation_number(db: Session) -> str:
-    """Generate a unique quotation number like Q-2025-0001"""
-    current_year = datetime.now().year
-    prefix = f"Q-{current_year}-"
+def generate_quotation_number(db: Session, suffix: str = "") -> str:
+    """Generate a unique quotation number like Q202510035IIL.
 
-    # Find the latest quotation number for this year
-    latest = db.query(Quotation).filter(
-        Quotation.quotation_number.like(f"{prefix}%")
-    ).order_by(Quotation.quotation_number.desc()).first()
+    Format: Q{YYYY}{MM}{NNN}{suffix}
+    - Q      : document type prefix
+    - YYYY   : 4-digit year
+    - MM     : 2-digit month (zero-padded)
+    - NNN    : 3-digit running number, resets to 001 each January 1
+    - suffix : user-supplied company identifier (e.g. IIL)
+    """
+    now = datetime.now()
+    year = now.year
+    month = now.month
+    year_prefix = f"Q{year}"  # e.g. "Q2025"
 
-    if latest:
-        # Extract the number part and increment
-        last_number = int(latest.quotation_number.split('-')[-1])
-        new_number = last_number + 1
-    else:
-        new_number = 1
+    # Find all new-format quotations for this year (start with Q + 4-digit year)
+    quotations = db.query(Quotation).filter(
+        Quotation.quotation_number.like(f"{year_prefix}%")
+    ).all()
 
-    return f"{prefix}{new_number:04d}"
+    # Running number sits at characters 7–9 (0-indexed): Q(0) YYYY(1-4) MM(5-6) NNN(7-9)
+    max_seq = 0
+    for q in quotations:
+        num_str = q.quotation_number[7:10] if len(q.quotation_number) >= 10 else ""
+        if num_str.isdigit():
+            max_seq = max(max_seq, int(num_str))
+
+    new_seq = max_seq + 1
+    return f"Q{year}{month:02d}{new_seq:03d}{suffix}"
 
 
 @router.get("/", response_model=PaginatedQuotationsResponse)
@@ -116,11 +127,10 @@ def create_quotation(
     if not template.file_path or not file_storage.file_exists(template.id):
         raise HTTPException(status_code=400, detail="Template file not found")
 
-    # Generate quotation number
-    quotation_number = generate_quotation_number(db)
-
     # Create quotation record
     quotation_data = quotation_in.dict()
+    suffix = quotation_data.pop('suffix', '')  # not stored as its own column
+    quotation_number = generate_quotation_number(db, suffix)
     quotation_data['quotation_number'] = quotation_number
     quotation_data['created_by'] = current_user.id
     quotation_data['selected_contact'] = quotation_in.selected_contact.dict()

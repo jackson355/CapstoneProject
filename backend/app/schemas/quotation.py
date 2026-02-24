@@ -26,6 +26,7 @@ class QuotationCreate(BaseModel):
     template_id: int
     my_company_info: Optional[CompanyInfo] = None
     due_date: Optional[datetime] = None
+    suffix: str = ""
 
 class QuotationUpdate(BaseModel):
     client_id: Optional[int] = None

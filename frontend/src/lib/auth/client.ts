@@ -844,6 +844,7 @@ class AuthClient {
       website?: string;
     };
     due_date?: string;
+    suffix?: string;
   }): Promise<{ error?: string; data?: any }> {
     const token = localStorage.getItem('access_token');
     if (!token) return { error: 'Not authenticated' };

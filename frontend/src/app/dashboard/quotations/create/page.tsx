@@ -44,6 +44,9 @@ export default function Page(): React.JSX.Element {
   // Due date state
   const [dueDate, setDueDate] = React.useState('');
 
+  // Document number suffix (e.g. IIL)
+  const [suffix, setSuffix] = React.useState('');
+
   const selectedClient = React.useMemo(
     () => clients.find((c) => c.id === selectedClientId),
     [clients, selectedClientId]
@@ -164,6 +167,9 @@ export default function Page(): React.JSX.Element {
       if (dueDate) {
         params.due_date = new Date(dueDate).toISOString();
       }
+
+      // Add suffix for document numbering
+      params.suffix = suffix.trim().toUpperCase();
 
       const result = await authClient.createQuotation(params);
 
@@ -331,6 +337,16 @@ export default function Page(): React.JSX.Element {
                     )}
                   </>
                 )}
+
+                {/* Document Number Suffix */}
+                <TextField
+                  fullWidth
+                  label="Document Number Suffix"
+                  value={suffix}
+                  onChange={(e) => setSuffix(e.target.value)}
+                  inputProps={{ maxLength: 10 }}
+                  helperText={`Optional company identifier appended to the document number (e.g. IIL → Q${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}001${suffix.trim().toUpperCase() || 'IIL'})`}
+                />
 
                 {/* Due Date Field */}
                 <TextField
