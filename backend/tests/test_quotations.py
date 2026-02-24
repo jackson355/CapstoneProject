@@ -70,10 +70,12 @@ class TestQuotationCreation:
         assert response.status_code == 200
         data = response.json()
 
-        # Verify quotation number format (uses current year)
+        # Verify quotation number format: Q{YYYY}{MM}{NNN}{suffix}
         current_year = datetime.now().year
-        assert data["quotation_number"].startswith(f"Q-{current_year}-")
-        assert len(data["quotation_number"]) == 11  # Q-YYYY-0001
+        current_month = datetime.now().month
+        expected_prefix = f"Q{current_year}{current_month:02d}"
+        assert data["quotation_number"].startswith(expected_prefix)
+        assert len(data["quotation_number"]) >= 10  # Q + YYYY + MM + NNN minimum
 
         # Verify data
         assert data["client_id"] == test_client_data.id
@@ -245,9 +247,10 @@ class TestQuotationNumberGeneration:
         assert response2.status_code == 200
         quotation2_number = response2.json()["quotation_number"]
 
-        # Extract numbers and verify increment
-        num1 = int(quotation1_number.split('-')[-1])
-        num2 = int(quotation2_number.split('-')[-1])
+        # Extract 3-digit running number from new format Q{YYYY}{MM}{NNN}...
+        # Running number sits at characters 7-9 (after Q + YYYY + MM)
+        num1 = int(quotation1_number[7:10])
+        num2 = int(quotation2_number[7:10])
         assert num2 == num1 + 1
 
 
