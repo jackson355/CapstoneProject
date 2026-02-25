@@ -96,7 +96,7 @@ export default function EmailSettingsPage(): React.JSX.Element {
       // Transform reply_to_email to reply_to for backend
       const payload: any = {
         ...settings,
-        reply_to: settings.reply_to_email,
+        reply_to: settings.reply_to_email || undefined,  // empty string → omit (EmailStr rejects "")
       };
       delete payload.reply_to_email;
 
@@ -108,7 +108,11 @@ export default function EmailSettingsPage(): React.JSX.Element {
         delete payload.sendgrid_api_key;
       }
 
-      await authClient.updateEmailSettings(settingsId, payload);
+      const result = await authClient.updateEmailSettings(settingsId, payload);
+      if (result.error) {
+        setMessage({ type: 'error', text: result.error });
+        return;
+      }
       setMessage({ type: 'success', text: 'Email settings saved successfully!' });
     } catch (error) {
       logger.error('Failed to save email settings', error);
@@ -131,7 +135,7 @@ export default function EmailSettingsPage(): React.JSX.Element {
       // Transform reply_to_email to reply_to for backend
       const payload: any = {
         ...settings,
-        reply_to: settings.reply_to_email,
+        reply_to: settings.reply_to_email || undefined,  // empty string → omit (EmailStr rejects "")
       };
       delete payload.reply_to_email;
 
@@ -144,7 +148,11 @@ export default function EmailSettingsPage(): React.JSX.Element {
       }
 
       // First save the settings
-      await authClient.updateEmailSettings(settingsId, payload);
+      const saveResult = await authClient.updateEmailSettings(settingsId, payload);
+      if (saveResult.error) {
+        setMessage({ type: 'error', text: saveResult.error });
+        return;
+      }
 
       // Then send a test email with dynamic subject based on provider
       const providerName = settings.provider === 'sendgrid' ? 'SendGrid' : 'SMTP';
