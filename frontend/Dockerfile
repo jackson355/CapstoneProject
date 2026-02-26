@@ -1,17 +1,20 @@
-FROM node:18-alpine
-
+FROM node:18-alpine AS deps
 WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts
 
-COPY package*.json ./
-RUN npm install
-
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
-# Debug: verify which env files exist and what got baked in
-RUN echo "=== ENV FILES IN BUILD ===" && ls -la .env* 2>/dev/null || echo "No .env files found"
-RUN echo "=== NEXT_PUBLIC_API_BASE_URL ===" && echo "$NEXT_PUBLIC_API_BASE_URL" && echo "(empty means fallback to /api - this is correct)"
-
 RUN npm run build
 
+FROM node:18-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/package.json ./package.json
+COPY --from=deps /app/node_modules ./node_modules
 EXPOSE 3000
-CMD ["npm", "start"]
+CMD ["npm","start"]
