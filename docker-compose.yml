@@ -86,8 +86,14 @@ services:
       - ./frontend/.env.frontend
     tmpfs:
       - /tmp:noexec,nosuid,size=64m
+    networks:
+      - internal
     depends_on:
       - backend
+
+networks:
+  internal:
+    internal: true  # no outbound internet access for frontend
 
 volumes:
   postgres_data:
