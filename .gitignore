@@ -16,6 +16,8 @@ __pycache__/
 instance/
 .env
 *.env
+.env.*
+**/.env.*
 .venv/
 venv/
 env/
@@ -34,3 +36,4 @@ frontend/.vercel/
 *.pid
 *.log
 docker-data/
+certbot/
