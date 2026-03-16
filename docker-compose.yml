@@ -84,6 +84,8 @@ services:
     restart: always
     env_file:
       - ./frontend/.env.frontend
+    tmpfs:
+      - /tmp:noexec,nosuid,size=64m
     depends_on:
       - backend
 
