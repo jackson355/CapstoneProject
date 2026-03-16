@@ -16,6 +16,9 @@ services:
       - frontend
       - backend
       - onlyoffice
+    networks:
+      - public
+      - internal
     command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
 
   certbot:
@@ -24,6 +27,8 @@ services:
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
+    networks:
+      - public
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
   postgres:
@@ -36,6 +41,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
 
   pgadmin:
     image: dpage/pgadmin4
@@ -50,6 +57,9 @@ services:
       - pgadmin_data:/var/lib/pgadmin
     depends_on:
       - postgres
+    networks:
+      - public
+      - internal
 
   onlyoffice:
     image: onlyoffice/documentserver
@@ -62,6 +72,8 @@ services:
     volumes:
       - onlyoffice_data:/var/www/onlyoffice/Data
       - onlyoffice_logs:/var/log/onlyoffice
+    networks:
+      - internal
 
   backend:
     build: ./backend
@@ -77,6 +89,8 @@ services:
     depends_on:
       - postgres
       - onlyoffice
+    networks:
+      - internal
 
   frontend:
     build: ./frontend
@@ -92,8 +106,10 @@ services:
       - backend
 
 networks:
+  public:
+    driver: bridge
   internal:
-    internal: true  # no outbound internet access for frontend
+    internal: true  # no outbound internet access for isolated services
 
 volumes:
   postgres_data:
