@@ -13,7 +13,7 @@ mv nginx/conf.d/app.conf nginx/conf.d/app.conf.disabled
 docker compose up -d nginx
 
 echo "==> Step 2: Requesting SSL certificate for $DOMAIN..."
-docker compose run --rm certbot certonly \
+docker compose run --rm --entrypoint certbot certbot certonly \
   --webroot \
   -w /var/www/certbot \
   -d "$DOMAIN" \
