@@ -90,7 +90,8 @@ services:
       - postgres
       - onlyoffice
     networks:
-      - internal
+      - public    # needs outbound internet for SendGrid, etc.
+      - internal  # talks to postgres and onlyoffice
 
   frontend:
     build: ./frontend
